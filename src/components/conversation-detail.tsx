@@ -5,7 +5,6 @@ import {
   AlertCircle,
   ArrowDown,
   ArrowRight,
-  BookOpen,
   Check,
   CheckCheck,
   ChevronDown,
@@ -22,13 +21,13 @@ import {
   X,
 } from "lucide-react";
 import type { ComposerMode, Conversation, Draft } from "@/lib/types";
+import { AiReplyPanel } from "./ai-reply-panel";
 import { isActiveUser } from "@/lib/team";
 import {
   categories,
   draftKey,
   priorities,
   statuses,
-  suggestReply,
 } from "@/lib/types";
 import { ClientError, useDemo } from "./demo-context";
 import { Avatar, copyLink, dateTime, PriorityBadge, time } from "./ui";
@@ -49,7 +48,6 @@ export function ConversationDetail({
   );
   const [mode, setMode] = useState<ComposerMode>(savedDraft?.mode ?? "reply");
   const [composerOpen, setComposerOpen] = useState(!!savedDraft);
-  const [aiOpen, setAiOpen] = useState(false);
   const [writing, setWriting] = useState(false);
   const [suggestionRequest, setSuggestionRequest] = useState<{
     text: string;
@@ -60,7 +58,6 @@ export function ConversationDetail({
   const [metadataBusy, setMetadataBusy] = useState(false);
   const timelineRef = useRef<HTMLDivElement>(null);
   const mailbox = state.mailboxes.find((b) => b.id === c.mailboxId)!;
-  const suggestion = suggestReply(c, state.knowledge);
   const assignee = state.users.find((u) => u.id === c.assigneeId);
   const others = state.presence.filter(
     (p) => p.conversationId === c.id && p.sessionId !== sessionId,
@@ -486,7 +483,10 @@ export function ConversationDetail({
                   </time>
                 </div>
                 <div className="message-body">{entry.data.body}</div>
-                {entry.data.imap && (
+                {entry.data.direction === "outbound" && entry.data.signature && (
+                  <SignaturePreview signature={entry.data.signature} compact />
+                )}
+                {(entry.data.imap || entry.data.sentCopy) && (
                   <div className="outbound-label">
                     <a href={`/api/mail/source?email=${encodeURIComponent(entry.data.id)}`}>
                       Pobierz oryginał .eml
@@ -502,6 +502,13 @@ export function ConversationDetail({
                   <div className="outbound-label">
                     <CheckCheck size={12} /> Wysłano demonstracyjnie z{" "}
                     {entry.data.from}
+                  </div>
+                )}
+                {entry.data.sentCopy && (
+                  <div className="outbound-label">
+                    <CheckCheck size={12} /> Wysłano z {entry.data.from} · {entry.data.sentCopy.status === "saved"
+                      ? "kopia w folderze Wysłane"
+                      : "kopia do Wysłanych oczekuje na zapis"}
                   </div>
                 )}
               </section>
@@ -538,87 +545,11 @@ export function ConversationDetail({
       </div>
       <div className="response-area">
         {!c.suggestionDismissed && (
-          <div
-            className={`ai-suggestion ${suggestion.needsHuman && !suggestion.text ? "ai-human" : ""}`}
-          >
-            <div className="ai-heading">
-              <span className="ai-icon">
-                <Sparkles size={15} />
-              </span>
-              <button
-                className="ai-toggle"
-                aria-expanded={aiOpen}
-                onClick={() => setAiOpen(!aiOpen)}
-              >
-                <strong>
-                  {suggestion.text
-                    ? "Propozycja odpowiedzi"
-                    : "Potrzebna pomoc człowieka"}
-                </strong>
-                <ChevronDown size={13} className={aiOpen ? "expanded" : ""} />
-              </button>
-              <span className="ai-demo-label">AI · DEMO</span>
-              <button
-                className="icon-button"
-                title="Odrzuć propozycję"
-                onClick={() =>
-                  void act({
-                    type: "suggestion",
-                    conversationId: c.id,
-                    dismissed: true,
-                  }).catch((e) => toast(e.message))
-                }
-              >
-                <X size={14} />
-              </button>
-            </div>
-            <div hidden={!aiOpen}>
-              {suggestion.text ? (
-                <>
-                  <p className="ai-preview">
-                    {suggestion.text.replace(/^Dzień dobry,\s*/i, "")}
-                  </p>
-                  <div className="ai-bottom">
-                    <div className="ai-sources">
-                      <BookOpen size={12} />
-                      {suggestion.sources.map((source) => (
-                        <button
-                          key={source.id}
-                          onClick={() => openKnowledge(source.id)}
-                        >
-                          {source.title} <span>v{source.version}</span>
-                        </button>
-                      ))}
-                    </div>
-                    <button
-                      className="button ai-use"
-                      onClick={() => {
-                        setMode("reply");
-                        setComposerOpen(true);
-                        setAiOpen(false);
-                        setSuggestionRequest({
-                          text: suggestion.text,
-                          token: Date.now(),
-                        });
-                      }}
-                    >
-                      Użyj propozycji <ArrowRight size={13} />
-                    </button>
-                  </div>
-                  {suggestion.needsHuman && (
-                    <span className="ai-caution">
-                      Wymaga weryfikacji technicznej przed odpowiedzią.
-                    </span>
-                  )}
-                </>
-              ) : (
-                <p>
-                  Brak zatwierdzonej wiedzy dla tej sprawy. Przypisz osobę i
-                  skonsultuj temat w komentarzu wewnętrznym.
-                </p>
-              )}
-            </div>
-          </div>
+          <AiReplyPanel key={c.id} conversation={c} onUse={(text) => {
+            setMode("reply");
+            setComposerOpen(true);
+            setSuggestionRequest({ text, token: Date.now() });
+          }} />
         )}
         <div
           className={`composer ${mode === "comment" ? "comment-composer" : ""} ${composerOpen ? "" : "composer-collapsed"}`}
@@ -757,6 +688,7 @@ function DraftEditor({
     text.trim().length > 0 &&
     baseRevision !== conversation.publicRevision;
   const mailbox = state.mailboxes.find((b) => b.id === conversation.mailboxId)!;
+  const pendingSend = state.outgoing?.find((job) => job.conversationId === conversation.id);
 
   function updateText(value: string) {
     textRef.current = value;
@@ -871,7 +803,7 @@ function DraftEditor({
     if (
       submitted.current ||
       (!text.trim() && !retryRequired) ||
-      hasNewReply ||
+      (hasNewReply && !retryRequired) ||
       conflictDraft
     )
       return;
@@ -903,27 +835,28 @@ function DraftEditor({
       const revision = result.conversations.find(
         (c) => c.id === conversation.id,
       )!.publicRevision;
+      const remainingDraft = draft?.text ?? "";
       savedRef.current = {
-        text: "",
-        base: revision,
+        text: remainingDraft,
+        base: draft?.basePublicRevision ?? revision,
         version: draft?.version ?? 0,
       };
-      textRef.current = "";
-      setText("");
-      updateBase(revision);
+      textRef.current = remainingDraft;
+      setText(remainingDraft);
+      updateBase(draft?.basePublicRevision ?? revision);
       setSaveState("saved");
       setRetryRequired(false);
       frozenAction.current = null;
       requestId.current = null;
       toast(
         mode === "reply"
-          ? `Odpowiedź zapisana demonstracyjnie z ${mailbox.email}.`
+          ? `Odpowiedź wysłana z ${mailbox.email}.`
           : "Komentarz wewnętrzny dodany. Widzi go tylko zespół.",
       );
       onWriting(false);
       setTimeout(onAdded, 100);
     } catch (error) {
-      if (!(error instanceof ClientError) && frozenAction.current)
+      if (frozenAction.current && (!(error instanceof ClientError) || error.code === "DELIVERY_UNKNOWN" || error.code === "SEND_PENDING"))
         setRetryRequired(true);
       setError((error as Error).message);
       if (error instanceof ClientError && error.code === "NEW_REPLY")
@@ -949,11 +882,18 @@ function DraftEditor({
           </>
         )}
       </div>
-      {mode === "reply" && mailbox.mode !== "demo" && (
+      {mode === "reply" && !mailbox.canSend && (
         <div className="inline-warning">
           {mailbox.mode === "imap"
             ? "Odbiór IMAP działa. Wysyłanie SMTP nie jest jeszcze podłączone. Możesz zapisać szkic lub dodać komentarz wewnętrzny."
             : "Skrzynka nie jest podłączona. Wysyłanie wiadomości jest niedostępne."}
+        </div>
+      )}
+      {mode === "reply" && pendingSend && (
+        <div className="inline-warning">
+          {pendingSend.status === "unknown"
+            ? pendingSend.error || "Wynik poprzedniej wysyłki wymaga sprawdzenia. Ponowne wysyłanie jest zablokowane."
+            : "Trwa wysyłanie odpowiedzi z tej wspólnej skrzynki."}
         </div>
       )}
       {hasNewReply && (
@@ -1043,6 +983,9 @@ function DraftEditor({
           void flush().catch(() => undefined);
         }}
       />
+      {mode === "reply" && user.signature && (
+        <SignaturePreview signature={user.signature} />
+      )}
       {error && (
         <div className="editor-error" role="alert">
           {error}
@@ -1082,9 +1025,9 @@ function DraftEditor({
           className={`button ${mode === "reply" ? "primary" : "internal-button"}`}
           disabled={
             busy ||
-            (mode === "reply" && mailbox.mode !== "demo") ||
+            (mode === "reply" && (!mailbox.canSend || (!!pendingSend && !retryRequired))) ||
             (!text.trim() && !retryRequired) ||
-            hasNewReply ||
+            (hasNewReply && !retryRequired) ||
             !!conflictDraft
           }
           onClick={() => void submit()}
@@ -1105,6 +1048,31 @@ function DraftEditor({
             </>
           )}
         </button>
+      </div>
+    </div>
+  );
+}
+
+function SignaturePreview({ signature, compact = false }: {
+  signature: NonNullable<import("@/lib/types").User["signature"]>;
+  compact?: boolean;
+}) {
+  if (signature.custom) return <iframe title={`Podpis: ${signature.name}`} sandbox="" referrerPolicy="no-referrer"
+    className={`saved-signature-frame ${compact ? "signature-compact" : ""}`} srcDoc={signature.custom.html} />;
+  return (
+    <div className={`employee-signature ${compact ? "signature-compact" : ""}`}>
+      <div className="signature-brand">
+        <strong>{signature.company}</strong>
+        <span>ALLEGRO ADS<br />PARTNER</span>
+      </div>
+      <div className="signature-rule" />
+      <div className="signature-person">
+        <strong>{signature.name}</strong>
+        <span>{signature.title}</span>
+        <small>
+          {signature.phone && <>☎ {signature.phone}<br /></>}
+          ✉ {signature.email}<br />🌐 {signature.website}
+        </small>
       </div>
     </div>
   );

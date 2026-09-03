@@ -1,3 +1,5 @@
+import type { AiSettingsPublic, AiSuggestion, AiUsage, AiUsageSummary } from "./ai-types";
+
 export const categories = [
   "Awaria",
   "Licencja",
@@ -23,7 +25,17 @@ export interface User {
   initials: string;
   color: string;
   role: string;
+  signature?: EmployeeSignature;
   active?: boolean;
+}
+export interface EmployeeSignature {
+  custom?: { mjml: string; html: string; text: string; version: number; updatedAt: string; updatedBy: string };
+  name: string;
+  title: string;
+  email: string;
+  phone?: string;
+  website: string;
+  company: string;
 }
 export interface Mailbox {
   id: string;
@@ -32,6 +44,7 @@ export interface Mailbox {
   color: string;
   description: string;
   mode: "demo" | "unconnected" | "imap";
+  canSend?: boolean;
 }
 export interface MailSyncState {
   status: "unconfigured" | "syncing" | "connected" | "error";
@@ -56,6 +69,21 @@ export interface Email {
   references?: string[];
   imap?: { uidValidity: string; uid: number; folder: "INBOX" };
   attachments?: { name: string; size: number }[];
+  sentCopy?: { status: "pending" | "saved"; folder?: string; error?: string };
+  signature?: EmployeeSignature;
+}
+export interface OutgoingMail {
+  requestId: string;
+  conversationId: string;
+  userId: string;
+  draftVersion: number;
+  basePublicRevision: number;
+  subject: string;
+  inReplyTo?: string;
+  email: Email;
+  raw?: string;
+  status: "prepared" | "sending" | "sent" | "failed" | "unknown";
+  error?: string;
 }
 // Internal comments never share the outbound email shape or delivery path.
 export interface InternalComment {
@@ -88,6 +116,7 @@ export interface Conversation {
   activities: Activity[];
   suggestionDismissed: boolean;
   closureVersion: number;
+  aiSuggestion?: AiSuggestion;
 }
 export interface Draft {
   key: string;
@@ -150,10 +179,15 @@ export interface DemoState {
   archives: Archive[];
   appliedRequests: string[];
   mailSync?: Record<string, MailSyncState>;
+  outbox?: OutgoingMail[];
+  aiUsage?: (AiUsage & { id: string; conversationId: string; model: string; generatedAt: string })[];
 }
-export type PublicState = Omit<DemoState, "appliedRequests" | "archives"> & {
+export type PublicState = Omit<DemoState, "appliedRequests" | "archives" | "outbox" | "aiUsage"> & {
   archiveCount: number;
+  aiSettings: AiSettingsPublic;
+  aiUsageSummary: AiUsageSummary;
   presence: Presence[];
+  outgoing: Pick<OutgoingMail, "requestId" | "conversationId" | "status" | "error">[];
 };
 export interface Suggestion {
   text: string;
