@@ -6,6 +6,7 @@ import { randomUUID } from "node:crypto";
 import { getMailSync, saveMailSync } from "./store";
 import { parseIncomingMail } from "./mail-parser";
 import type { IncomingMail } from "./mail-import";
+import { retrySentCopies } from "./mail-send";
 
 const intervalMs = 30_000;
 type SyncRuntime = {
@@ -133,6 +134,9 @@ export function startMailSync() {
   const tick = () => {
     void runtime.run?.().catch(() => {
       console.error("Nie można zapisać stanu synchronizacji IMAP na dysku.");
+    });
+    void retrySentCopies().catch(() => {
+      console.error("Nie można sprawdzić oczekujących kopii wiadomości wysłanych.");
     });
   };
   runtime.timer = setInterval(tick, intervalMs);

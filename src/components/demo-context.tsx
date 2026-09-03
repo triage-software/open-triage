@@ -29,6 +29,7 @@ export interface DemoContextValue {
   toast: (message: string) => void;
   openConversation: (id: string, commentId?: string) => void;
   openKnowledge: (id?: string) => void;
+  openSettings: () => void;
 }
 export const DemoContext = createContext<DemoContextValue | null>(null);
 export function useDemo() {
@@ -72,6 +73,8 @@ export function useDemoData() {
         retiredGenerations.current.add(current.generation);
         toast("Dane demo zostały przywrócone.");
       }
+      if (current && current.aiSettings.version > next.aiSettings.version)
+        next = { ...next, aiSettings: current.aiSettings };
       stateRef.current = next;
       setState(next);
       setConnected(true);

@@ -22,6 +22,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  Settings,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
@@ -35,6 +36,7 @@ import { DemoContext, useDemo, useDemoData } from "./demo-context";
 import { Avatar, PriorityBadge, relativeTime } from "./ui";
 import { ConversationDetail } from "./conversation-detail";
 import { KnowledgeView, NotificationsView } from "./workspace-views";
+import { AiSettingsView } from "./ai-settings-view";
 
 const variants: Variant[] = ["inbox", "queue", "board"];
 const variantLabels = { inbox: "Skrzynka", queue: "Kolejka", board: "Tablica" };
@@ -90,6 +92,7 @@ export function SupportApp() {
     [updateUrl],
   );
   const selected = data.state?.conversations.find((c) => c.id === selectedId);
+  const openSettings = useCallback(() => updateUrl({ view: "settings" }), [updateUrl]);
   useEffect(() => {
     if (selectedId && data.state) {
       const conversation = data.state.conversations.find(
@@ -194,7 +197,7 @@ export function SupportApp() {
     (n) => !n.readBy.includes(user.id),
   ).length;
   const title =
-    view === "knowledge"
+    view === "settings" ? "Ustawienia" : view === "knowledge"
       ? "Baza wiedzy"
       : view === "notifications"
         ? "Powiadomienia"
@@ -223,6 +226,7 @@ export function SupportApp() {
         toast: data.toast,
         openConversation,
         openKnowledge,
+        openSettings,
       }}
     >
       <div className="app-shell">
@@ -305,6 +309,9 @@ export function SupportApp() {
               {pendingKnowledge > 0 && (
                 <span className="plain-count">{pendingKnowledge}</span>
               )}
+            </button>
+            <button className={view === "settings" ? "nav-active" : ""} onClick={openSettings}>
+              <Settings size={17} /><span>Ustawienia</span>
             </button>
           </nav>
           <div className="nav-section-label mailbox-heading">
@@ -456,7 +463,7 @@ export function SupportApp() {
               <span className="topbar-divider" />
               <span
                 className="top-demo"
-                title="Lokalny panel · odbiór IMAP, wysyłanie SMTP jeszcze niedostępne"
+                title="Lokalny panel · wspólna skrzynka IMAP i SMTP"
               >
                 LOKALNIE
               </span>
@@ -673,13 +680,14 @@ export function SupportApp() {
             </>
           ) : view === "knowledge" ? (
             <KnowledgeView selectedDocumentId={params.get("document")} />
+          ) : view === "settings" ? (
+            <AiSettingsView />
           ) : (
             <NotificationsView />
           )}
           <footer className="workspace-footer">
             <span>
-              <ShieldCheck size={13} /> Przykładowe dane · wiadomości nie
-              opuszczają demo
+              <ShieldCheck size={13} /> Lokalny zapis · wspólna skrzynka zespołu
             </span>
             <span>
               Open Triage <span className="footer-dot">·</span> Twój zespół,
@@ -715,8 +723,9 @@ export function SupportApp() {
               <p>
                 To lokalny panel. Skrzynka support@example.com odbiera prawdziwe
                 maile przez IMAP, co 30 sekund. Skrzynki hello@opentriage.com i
-                hello@opentriage.com czekają na podłączenie. Wysyłanie SMTP jest
-                jeszcze niedostępne. Wiadomości demo nie są tworzone ponownie.
+                hello@opentriage.com czekają na podłączenie. Odpowiedzi są wysyłane
+                z support@example.com, z kopią w folderze Wysłane wspólnej skrzynki.
+                Wiadomości demo nie są tworzone ponownie.
               </p>
               <ol>
                 <li>Wybierz układ: skrzynkę, kolejkę albo tablicę.</li>

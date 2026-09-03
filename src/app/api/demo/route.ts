@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { startMailSync } from "@/lib/mail-sync";
+import { sendMailboxReply } from "@/lib/mail-send";
 import {
   ActionError,
   applyAction,
@@ -75,6 +76,8 @@ export async function POST(request: NextRequest) {
     const input = await request.json();
     if (input.type === "presence")
       return NextResponse.json(await heartbeat(input.presence));
+    if (input.action?.type === "sendReply")
+      return NextResponse.json(await sendMailboxReply(input));
     return NextResponse.json(await applyAction(input));
   } catch (error) {
     return errorResponse(error);

@@ -5,8 +5,17 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { seedState } from "./seed";
 import { migrateMailboxes, removeSampleMail } from "./mailboxes";
-import { isActiveUser, migrateTeam } from "./team";
+import { isActiveUser, migrateTeam, syncTeamProfiles } from "./team";
 import { mergeIncomingMail, type IncomingMail } from "./mail-import";
+import { MailError as ActionError, reserveReply, claimReply, acceptReply, recordSentCopy } from "./mail-outbox";
+import { smtpConfig } from "./mail-config";
+import { aiSettings } from "./ai-settings";
+import { AiError } from "./ai-settings-store";
+import { buildAiContext } from "./ai-context";
+import { signatureFor, signatureText } from "./signatures";
+import { compileSignatureMjml } from "./mail-template";
+import type { AiSuggestion } from "./ai-types";
+export { MailError as ActionError } from "./mail-outbox";
 import {
   categories,
   draftKey,
@@ -27,16 +36,6 @@ const runtime = (runtimeGlobal.openTriageRuntime ??= {
   queue: Promise.resolve(),
   presence: new Map(),
 });
-
-export class ActionError extends Error {
-  constructor(
-    message: string,
-    public status = 400,
-    public code = "INVALID_ACTION",
-  ) {
-    super(message);
-  }
-}
 
 function serial<T>(operation: () => Promise<T>): Promise<T> {
   const next = runtime.queue.then(operation, operation);
@@ -123,6 +122,10 @@ async function load(): Promise<DemoState> {
       removeSampleMail(state);
       await atomicWrite(file, JSON.stringify(state, null, 2));
     }
+    if (syncTeamProfiles(state)) {
+      state.revision++;
+      await atomicWrite(file, JSON.stringify(state, null, 2));
+    }
     return state;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
@@ -132,7 +135,7 @@ async function load(): Promise<DemoState> {
     return state;
   }
 }
-function snapshot(state: DemoState): PublicState {
+async function snapshot(state: DemoState): Promise<PublicState> {
   for (const [key, item] of runtime.presence)
     if (
       Date.now() - item.seenAt > 45_000 ||
@@ -144,15 +147,83 @@ function snapshot(state: DemoState): PublicState {
       )
     )
       runtime.presence.delete(key);
-  const { appliedRequests: _requests, archives, ...visible } = state;
+  const { appliedRequests: _requests, archives, outbox = [], aiUsage = [], ...visible } = state;
+  const aiUsageSummary = aiUsage.reduce((sum, item) => ({
+    requests: sum.requests + 1,
+    cost: sum.cost + item.cost,
+    promptTokens: sum.promptTokens + item.promptTokens,
+    completionTokens: sum.completionTokens + item.completionTokens,
+    totalTokens: sum.totalTokens + item.totalTokens,
+  }), { requests: 0, cost: 0, promptTokens: 0, completionTokens: 0, totalTokens: 0 });
   return {
     ...visible,
+    mailboxes: visible.mailboxes.map((box) => ({
+      ...box, canSend: box.id === "test" && box.mode === "imap" && !!smtpConfig(),
+    })),
+    outgoing: outbox.filter((job) => ["prepared", "sending", "unknown"].includes(job.status))
+      .map(({ requestId, conversationId, status, error }) => ({ requestId, conversationId, status, error })),
     archiveCount: archives.length,
+    aiSettings: await aiSettings.getPublic(),
+    aiUsageSummary,
     presence: [...runtime.presence.values()],
   };
 }
 export function getState() {
   return serial(async () => snapshot(await load()));
+}
+
+export async function saveUserSignature(input: {
+  userId: string; actorId: string; generation: string; expectedVersion: number; mjml: string;
+}) {
+  // Compile outside the shared write queue; CAS below protects parallel edits.
+  const compiled = await compileSignatureMjml(input.mjml);
+  return serial(async () => {
+    const state = await load();
+    if (state.generation !== input.generation) throw new ActionError("Dane zmieniły się. Odśwież ustawienia.", 409);
+    const user = state.users.find((item) => item.id === input.userId && isActiveUser(item));
+    if (!user || !state.users.some((item) => item.id === input.actorId && isActiveUser(item)))
+      throw new ActionError("Nie znaleziono aktywnego pracownika.", 400);
+    if ((user.signature?.custom?.version ?? 0) !== input.expectedVersion)
+      throw new ActionError("Podpis zmienił się w innej karcie. Wczytaj aktualną wersję przed zapisem.", 409);
+    user.signature = { ...signatureFor(user, "support@example.com"), custom: {
+      ...compiled, version: input.expectedVersion + 1, updatedAt: new Date().toISOString(), updatedBy: input.actorId,
+    } };
+    state.revision++;
+    await atomicWrite(file, JSON.stringify(state, null, 2));
+    return user.signature.custom;
+  });
+}
+
+export function recordAiUsage(entry: NonNullable<DemoState["aiUsage"]>[number]) {
+  return serial(async () => {
+    const state = await load();
+    if (state.aiUsage?.some((item) => item.id === entry.id)) return;
+    (state.aiUsage ??= []).push(entry);
+    state.revision++;
+    await atomicWrite(file, JSON.stringify(state, null, 2));
+  });
+}
+
+export function saveAiSuggestion(conversationId: string, generation: string, suggestion: AiSuggestion) {
+  return serial(async () => {
+    const state = await load();
+    const conversation = state.conversations.find((item) => item.id === conversationId);
+    const mailbox = state.mailboxes.find((item) => item.id === conversation?.mailboxId);
+    if (state.generation !== generation || !conversation || !mailbox)
+      throw new AiError("Rozmowa nie jest już dostępna. Odśwież panel.", 409, "STALE_AI_CONTEXT");
+    const context = buildAiContext(conversation, mailbox, state.knowledge);
+    if (conversation.publicRevision !== suggestion.publicRevision || context.hash !== suggestion.contextHash ||
+        context.knowledgeStamp !== suggestion.knowledgeStamp || (await aiSettings.getPublic()).version !== suggestion.settingsVersion)
+      throw new AiError("Podczas generowania zmieniła się rozmowa, wiedza lub konfiguracja AI. Wygeneruj nową propozycję.", 409, "STALE_AI_CONTEXT");
+    const previous = conversation.aiSuggestion;
+    conversation.aiSuggestion = suggestion;
+    conversation.suggestionDismissed = false;
+    if (suggestion.needsHuman && (!previous?.needsHuman || previous.contextHash !== suggestion.contextHash))
+      notify(state, conversation, "escalation", "AI: potrzebna pomoc człowieka", new Date().toISOString());
+    state.revision++;
+    await atomicWrite(file, JSON.stringify(state, null, 2));
+    return suggestion;
+  });
 }
 
 export function getMailSync() {
@@ -256,6 +327,73 @@ const requestSchema = z.object({
 });
 export type DemoAction = z.infer<typeof actionSchema>;
 
+function changeOutbox<T>(change: (state: DemoState) => T) {
+  return serial(async () => {
+    const state = await load();
+    const result = change(state);
+    state.revision++;
+    await atomicWrite(file, JSON.stringify(state, null, 2));
+    return result;
+  });
+}
+
+export function prepareOutgoingReply(input: unknown) {
+  const parsed = requestSchema.safeParse(input);
+  if (!parsed.success || parsed.data.action.type !== "sendReply")
+    throw new ActionError("Nieprawidłowe dane odpowiedzi.");
+  if (!smtpConfig()) throw new ActionError("SMTP nie jest skonfigurowane.", 409, "MAILBOX_NOT_CONNECTED");
+  const request = { ...parsed.data, action: parsed.data.action };
+  return changeOutbox((state) => reserveReply(state, request));
+}
+
+export function claimOutgoingReply(requestId: string, raw: string) {
+  return changeOutbox((state) => claimReply(state, requestId, raw));
+}
+
+export function acceptOutgoingReply(requestId: string) {
+  return changeOutbox((state) => acceptReply(state, requestId));
+}
+
+export function failOutgoingReply(requestId: string, unknown: boolean, error: string) {
+  return changeOutbox((state) => {
+    const job = state.outbox!.find((item) => item.requestId === requestId)!;
+    job.status = unknown ? "unknown" : "failed";
+    job.error = error;
+  });
+}
+
+export function saveSentCopy(requestId: string, folder?: string) {
+  return changeOutbox((state) => recordSentCopy(state, requestId, folder));
+}
+
+export function getOutgoingMail(requestId?: string) {
+  return serial(async () => (await load()).outbox?.filter((job) =>
+    requestId ? job.requestId === requestId : job.status === "sent" && job.email.sentCopy?.status !== "saved",
+  ) ?? []);
+}
+
+export function recoverOutgoingReplies(activeRequests: string[]) {
+  return serial(async () => {
+    const state = await load();
+    let changed = false;
+    for (const job of state.outbox ?? []) {
+      if (activeRequests.includes(job.requestId)) continue;
+      if (job.status === "sending" || job.status === "prepared") {
+        const wasSending = job.status === "sending";
+        job.status = wasSending ? "unknown" : "failed";
+        job.error = wasSending
+          ? "Serwer przerwał pracę podczas wysyłki. Sprawdź, czy klient dostał maila, przed kolejną wysyłką."
+          : "Przygotowanie wiadomości zostało przerwane przed wysłaniem. Możesz wysłać szkic ponownie.";
+        changed = true;
+      }
+    }
+    if (changed) {
+      state.revision++;
+      await atomicWrite(file, JSON.stringify(state, null, 2));
+    }
+  });
+}
+
 function findConversation(state: DemoState, conversationId: string) {
   const conversation = state.conversations.find((c) => c.id === conversationId);
   if (!conversation) throw new ActionError("Nie znaleziono rozmowy.", 404);
@@ -300,7 +438,7 @@ function closeConversation(
   conversation.closureVersion++;
   const emailSections = conversation.emails.map((email) => ({
     createdAt: email.createdAt,
-    text: `## ${email.direction === "inbound" ? "Klient" : "Odpowiedź demonstracyjna"} — ${email.authorName}\n\n${email.createdAt}\n\n${email.body}`,
+    text: `## ${email.direction === "inbound" ? "Klient" : email.demo ? "Odpowiedź demonstracyjna" : "Odpowiedź"} — ${email.authorName}\n\n${email.createdAt}\n\n${email.body}${email.signature ? `\n\n---\n\n${signatureText(email.signature)}` : ""}`,
   }));
   const noteSections = conversation.comments.map((comment) => ({
     createdAt: comment.createdAt,
@@ -373,6 +511,9 @@ export function applyAction(input: unknown) {
         : null;
     if (action.type === "updateConversation" && conversation) {
       const patch = action.patch;
+      if (patch.status === "Zakończone" && state.outbox?.some((job) =>
+        job.conversationId === conversation.id && ["prepared", "sending", "unknown"].includes(job.status),
+      )) throw new ActionError("Przed zakończeniem rozmowy sprawdź wynik trwającej wysyłki.", 409, "SEND_PENDING");
       if (
         patch.assigneeId &&
         !state.users.some((u) => u.id === patch.assigneeId && isActiveUser(u))
