@@ -39,6 +39,7 @@ export function mergeIncomingMail(
       conversation.publicRevision++;
       conversation.updatedAt = new Date().toISOString();
       conversation.suggestionDismissed = false;
+      conversation.aiTriage = { id: randomUUID(), status: "pending", attempts: 0 };
       if (
         conversation.status === "Zakończone" ||
         conversation.status === "Oczekuje na klienta"
@@ -62,6 +63,7 @@ export function mergeIncomingMail(
         activities: [],
         suggestionDismissed: false,
         closureVersion: 0,
+        aiTriage: { id: randomUUID(), status: "pending", attempts: 0 },
       });
     }
     imported++;

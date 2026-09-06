@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import type { ComposerMode, Conversation, Draft } from "@/lib/types";
 import { AiReplyPanel } from "./ai-reply-panel";
+import { AiClassificationPanel } from "./ai-classification-panel";
 import { isActiveUser } from "@/lib/team";
 import {
   categories,
@@ -413,7 +414,7 @@ export function ConversationDetail({
                 <span />
                 <p>
                   <strong>
-                    {state.users.find((u) => u.id === entry.data.userId)?.name}
+                    {entry.data.userId === "ai" ? "AI" : state.users.find((u) => u.id === entry.data.userId)?.name}
                   </strong>{" "}
                   {entry.data.text}
                 </p>
@@ -544,6 +545,7 @@ export function ConversationDetail({
         </div>
       </div>
       <div className="response-area">
+        <AiClassificationPanel key={`classification:${c.id}`} conversation={c} />
         {!c.suggestionDismissed && (
           <AiReplyPanel key={c.id} conversation={c} onUse={(text) => {
             setMode("reply");

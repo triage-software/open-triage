@@ -24,7 +24,7 @@ export async function getAiModels() {
   }).finally(() => { runtime.modelRequest = undefined; });
   return runtime.modelRequest;
 }
-async function selectedModel(id: string) {
+export async function selectedModel(id: string) {
   const model = (await getAiModels()).find((item) => item.id === id);
   if (!model) throw new AiError("Wybrany model jest niedostępny lub nie obsługuje wymaganej struktury odpowiedzi. Zmień model w ustawieniach.", 400, "UNSUPPORTED_MODEL");
   return model;

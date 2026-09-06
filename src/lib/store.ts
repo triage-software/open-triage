@@ -11,10 +11,10 @@ import { MailError as ActionError, reserveReply, claimReply, acceptReply, record
 import { smtpConfig } from "./mail-config";
 import { aiSettings } from "./ai-settings";
 import { AiError } from "./ai-settings-store";
-import { buildAiContext } from "./ai-context";
+import { buildAiContext, buildClassificationContext } from "./ai-context";
 import { signatureFor, signatureText } from "./signatures";
 import { compileSignatureMjml } from "./mail-template";
-import type { AiSuggestion } from "./ai-types";
+import type { AiClassification, AiSuggestion } from "./ai-types";
 export { MailError as ActionError } from "./mail-outbox";
 import {
   categories,
@@ -223,6 +223,63 @@ export function saveAiSuggestion(conversationId: string, generation: string, sug
     state.revision++;
     await atomicWrite(file, JSON.stringify(state, null, 2));
     return suggestion;
+  });
+}
+
+export function queueAiTriage(conversationId: string, generation: string, userId: string) {
+  return serial(async () => {
+    const state = await load();
+    const conversation = state.conversations.find((item) => item.id === conversationId);
+    if (state.generation !== generation || !conversation)
+      throw new AiError("Rozmowa nie jest już dostępna. Odśwież panel.", 409, "STALE_AI_CONTEXT");
+    if (!state.users.some((user) => user.id === userId && isActiveUser(user))) throw new AiError("Wybierz aktywnego pracownika.");
+    if (!(await aiSettings.getPublic()).configured) throw new AiError("Dodaj klucz OpenRouter w Ustawieniach.", 400, "AI_NOT_CONFIGURED");
+    if (conversation.aiTriage?.status === "pending") return conversation.aiTriage;
+    conversation.aiTriage = { id: randomUUID(), status: "pending", attempts: 0 };
+    state.revision++;
+    await atomicWrite(file, JSON.stringify(state, null, 2));
+    return conversation.aiTriage;
+  });
+}
+
+export function saveAiClassification(conversationId: string, generation: string, jobId: string, result: AiClassification) {
+  return serial(async () => {
+    const state = await load();
+    const conversation = state.conversations.find((item) => item.id === conversationId);
+    const job = conversation?.aiTriage;
+    const mailbox = state.mailboxes.find((item) => item.id === conversation?.mailboxId);
+    // An incoming email, manual edit, or reset invalidates the in-flight job.
+    if (state.generation !== generation || !conversation || !mailbox || job?.id !== jobId ||
+        !["pending", "error"].includes(job.status)) return;
+    if (buildClassificationContext(conversation, mailbox).hash !== result.contextHash ||
+        (await aiSettings.getPublic()).version !== result.settingsVersion) {
+      conversation.aiTriage = { id: randomUUID(), status: "pending", attempts: 0 };
+    } else {
+      const now = new Date().toISOString();
+      if (result.priority === "Krytyczny" && conversation.priority !== "Krytyczny")
+        notify(state, conversation, "urgent", "Zgłoszenie krytyczne", now);
+      conversation.category = result.category;
+      conversation.priority = result.priority;
+      conversation.updatedAt = now;
+      conversation.aiTriage = { ...job, status: "applied", result, error: undefined, nextAttemptAt: undefined };
+      addActivity(conversation, "ai", `przypisuje kategorię „${result.category}” i priorytet „${result.priority}”`, now);
+    }
+    state.revision++;
+    await atomicWrite(file, JSON.stringify(state, null, 2));
+  });
+}
+
+export function failAiTriage(conversationId: string, generation: string, jobId: string, error: string) {
+  return serial(async () => {
+    const state = await load();
+    const job = state.conversations.find((item) => item.id === conversationId)?.aiTriage;
+    if (state.generation !== generation || job?.id !== jobId || !["pending", "error"].includes(job.status)) return;
+    job.status = "error";
+    job.attempts++;
+    job.error = error;
+    job.nextAttemptAt = new Date(Date.now() + Math.min(300_000, 30_000 * 2 ** Math.min(job.attempts - 1, 4))).toISOString();
+    state.revision++;
+    await atomicWrite(file, JSON.stringify(state, null, 2));
   });
 }
 
@@ -511,6 +568,9 @@ export function applyAction(input: unknown) {
         : null;
     if (action.type === "updateConversation" && conversation) {
       const patch = action.patch;
+      if (patch.category !== undefined || patch.priority !== undefined) {
+        conversation.aiTriage = { id: randomUUID(), status: "manual", attempts: 0 };
+      }
       if (patch.status === "Zakończone" && state.outbox?.some((job) =>
         job.conversationId === conversation.id && ["prepared", "sending", "unknown"].includes(job.status),
       )) throw new ActionError("Przed zakończeniem rozmowy sprawdź wynik trwającej wysyłki.", 409, "SEND_PENDING");
