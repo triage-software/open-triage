@@ -7,6 +7,7 @@ import { getMailSync, saveMailSync } from "./store";
 import { parseIncomingMail } from "./mail-parser";
 import type { IncomingMail } from "./mail-import";
 import { retrySentCopies } from "./mail-send";
+import { startAiTriage } from "./ai-triage-service";
 
 const intervalMs = 30_000;
 type SyncRuntime = {
@@ -101,6 +102,7 @@ async function receive() {
         }
         // Incoming mail and cursor commit together under the shared write queue.
         await saveMailSync({ uidValidity, lastUid }, batch);
+        startAiTriage();
       }
       await saveMailSync({
         status: "connected",
@@ -122,6 +124,9 @@ async function receive() {
 }
 
 export function syncTestMailbox() {
+  // Also resume pending classifications after restart or provider recovery,
+  // even when no new mail arrives or IMAP is temporarily unavailable.
+  startAiTriage();
   if (!runtime.pending) {
     runtime.pending = receive().finally(() => { runtime.pending = undefined; });
   }

@@ -47,24 +47,19 @@ export function AiReplyPanel({ conversation: c, onUse }: { conversation: Convers
     </div>
     {open && <div className="ai-reply-content">
       {error && <p className="settings-error" role="alert">{error}</p>}
-      {!suggestion && !busy && <p>{state.aiSettings.configured ? "Wygeneruj odpowiedź ze źródłami oraz propozycję kategorii i priorytetu. Wynik sprawdzisz przed użyciem." : "Dodaj klucz API w ustawieniach, aby korzystać z odpowiedzi AI."}</p>}
+      {!suggestion && !busy && <p>{state.aiSettings.configured ? "Wygeneruj draft odpowiedzi ze źródłami. Sprawdź go i kliknij Użyj draftu, aby wstawić go do odpowiedzi mailowej. Kategoria i priorytet są przypisywane osobno." : "Dodaj klucz API w ustawieniach, aby korzystać z odpowiedzi AI."}</p>}
       {suggestion && <>
         {stale && <p className="settings-warning" role="status">Rozmowa, wiedza lub ustawienia zmieniły się. Wygeneruj aktualną propozycję.</p>}
         {suggestion.needsHuman && <p className="ai-caution">Potrzebna pomoc człowieka. {suggestion.reason}</p>}
         {suggestion.text && <p className="ai-preview">{suggestion.text}</p>}
         {!suggestion.needsHuman && suggestion.reason && <p className="ai-reason">{suggestion.reason}</p>}
-        <div className="ai-triage"><span>{suggestion.category} · {suggestion.priority}</span>
-          {(c.category !== suggestion.category || c.priority !== suggestion.priority) && <button className="text-button" disabled={busy || stale || !state.aiSettings.configured}
-            onClick={() => void act({ type: "updateConversation", conversationId: c.id, patch: { category: suggestion.category, priority: suggestion.priority } })
-              .then(() => toast("Kategoria i priorytet zaktualizowane.")).catch((error) => toast(error.message))}>Zastosuj kategorię i priorytet</button>}
-        </div>
         <div className="ai-sources"><BookOpen size={12} />
           {suggestion.sources.length ? suggestion.sources.map((source) => <button key={source.id} onClick={() => openKnowledge(source.id)}>{source.title} <span>v{source.version}</span></button>) : <span>Brak źródeł · <button onClick={() => openKnowledge()}>Uzupełnij wiedzę</button></span>}
         </div>
         <div className="ai-bottom">
           <small title={`Wygenerowano ${new Date(suggestion.generatedAt).toLocaleString("pl-PL")}`}>{suggestion.model} · sprawdź przed wysłaniem</small>
           <button className="button" disabled={busy || !state.aiSettings.configured} onClick={() => void generate(true)}>{busy ? <LoaderCircle size={13} className="ai-spinning" aria-hidden="true" /> : <RefreshCw size={13} />} {busy ? "Generowanie…" : "Wygeneruj ponownie"}</button>
-          {suggestion.text && <button className="button ai-use" disabled={busy || stale || !state.aiSettings.configured} onClick={() => { onUse(suggestion.text); setOpen(false); }}>Użyj propozycji <ArrowRight size={13} /></button>}
+          {suggestion.text && <button className="button ai-use" disabled={busy || stale || !state.aiSettings.configured} onClick={() => { onUse(suggestion.text); setOpen(false); }}>Użyj draftu <ArrowRight size={13} /></button>}
         </div>
       </>}
     </div>}

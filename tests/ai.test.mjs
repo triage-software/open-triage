@@ -4,8 +4,8 @@ import { mkdtemp, readFile, stat, rm } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { createAiSettingsStore } from "../src/lib/ai-settings-store.ts";
-import { buildAiContext, validateAiOutput } from "../src/lib/ai-context.ts";
-import { listAiModels, verifyAiKey, getAiKeyUsage, completeAiReply } from "../src/lib/openrouter-client.ts";
+import { buildAiContext, buildClassificationContext, validateAiOutput } from "../src/lib/ai-context.ts";
+import { listAiModels, verifyAiKey, getAiKeyUsage, completeAiReply, completeAiClassification } from "../src/lib/openrouter-client.ts";
 
 const fakeKey = "sk-or-v1-test-placeholder-not-a-real-key";
 const model = { id: "z-ai/glm-5.3", name: "GLM 5.3", reasoning: true };
@@ -13,7 +13,7 @@ const mailbox = { id: "test", name: "Test", email: "test@example.test" };
 const doc = (id, mailboxId = "test", status = "approved") => ({ id, mailboxId, versions: [{ version: 1, status, title: `Licencja ${id}`, body: `Instrukcja licencji ${id}` }] });
 const conversation = { subject: "Licencja", emails: [{ direction: "inbound", from: "client@example.test", to: mailbox.email, body: "Pytanie o licencję", createdAt: "2026-09-03" }], comments: [{ body: "INTERNAL_SECRET" }], drafts: ["PRIVATE_DRAFT"] };
 const context = buildAiContext(conversation, mailbox, [doc("approved"), doc("foreign", "other"), doc("rejected", "test", "rejected"), doc("pending", "test", "pending")]);
-const answer = { text: "Dzień dobry, oto instrukcja.", sourceIds: ["approved"], needsHuman: false, reason: "Wiedza zawiera instrukcję.", category: "Licencja", priority: "Normalny" };
+const answer = { text: "Dzień dobry, oto instrukcja.", sourceIds: ["approved"], needsHuman: false, reason: "Wiedza zawiera instrukcję." };
 const completed = (content = JSON.stringify(answer), finish_reason = "stop") => Response.json({
   choices: [{ finish_reason, message: { content } }],
   usage: { cost: 0.00125, prompt_tokens: 120, completion_tokens: 30, total_tokens: 150 },
@@ -81,7 +81,7 @@ test("źródła są rozwiązywane na serwerze, brak wiedzy eskaluje, obcy identy
   const noDocuments = buildAiContext(conversation, mailbox, []);
   const noSource = validateAiOutput({ ...answer, sourceIds: [] }, noDocuments);
   assert.equal(noSource.text, ""); assert.equal(noSource.needsHuman, true);
-  assert.equal(noSource.category, "Licencja");
+  assert.equal(noSource.category, undefined);
   assert.throws(() => validateAiOutput({ ...answer, priority: "Wymyślony" }, context), { code: "INVALID_AI_RESPONSE" });
 });
 
@@ -96,6 +96,8 @@ test("OpenRouter otrzymuje Bearer, model, JSON schema i bezpieczny kontekst", as
     assert.equal(input.model, model.id);
     assert.equal(input.session_id, "open-triage:mailbox:test");
     assert.equal(input.response_format.json_schema.strict, true);
+    assert.equal(input.response_format.json_schema.schema.properties.category, undefined);
+    assert.equal(input.response_format.json_schema.schema.properties.priority, undefined);
     assert.equal(input.response_format.json_schema.schema.properties.sourceIds.minItems, 1);
     assert.equal(input.response_format.json_schema.schema.properties.needsHuman.const, false);
     assert.equal(input.provider.require_parameters, true);
@@ -112,6 +114,26 @@ test("OpenRouter otrzymuje Bearer, model, JSON schema i bezpieczny kontekst", as
   });
   assert.equal(calls, 1); assert.equal(result.text, answer.text);
   assert.deepEqual(result.usage, { cost: 0.00125, promptTokens: 120, completionTokens: 30, totalTokens: 150 });
+});
+
+test("klasyfikacja ma osobny schemat, nie wymaga wiedzy i nie generuje draftu", async () => {
+  const classification = { category: "Awaria", priority: "Krytyczny", reason: "Usługa nie działa." };
+  const inputContext = buildClassificationContext(conversation, mailbox);
+  assert.equal(inputContext.data.documents, undefined);
+  const result = await completeAiClassification(inputContext, fakeKey, model, async (_url, options) => {
+    const input = JSON.parse(options.body);
+    assert.equal(input.response_format.json_schema.name, "support_classification");
+    assert.deepEqual(Object.keys(input.response_format.json_schema.schema.properties).sort(), ["category", "priority", "reason"]);
+    assert.deepEqual(JSON.parse(input.messages[1].content), inputContext.data);
+    for (const secret of ["INTERNAL_SECRET", "PRIVATE_DRAFT", fakeKey]) assert.ok(!options.body.includes(secret));
+    return completed(JSON.stringify(classification));
+  });
+  assert.equal(result.category, "Awaria");
+  assert.equal(result.priority, "Krytyczny");
+  assert.equal(result.text, undefined);
+  for (const invalid of [{ ...classification, priority: "Pilne" }, { ...classification, category: "Obca" }, { ...classification, text: "Niechciany draft" }]) {
+    await assert.rejects(completeAiClassification(inputContext, fakeKey, model, async () => completed(JSON.stringify(invalid))), { code: "INVALID_AI_RESPONSE" });
+  }
 });
 
 test("błędy dostawcy nie ujawniają danych, uszkodzone i ucięte odpowiedzi nie są przyjmowane", async () => {

@@ -34,13 +34,22 @@ export function buildAiContext(conversation: Conversation, mailbox: Mailbox, kno
   };
 }
 export type AiContext = ReturnType<typeof buildAiContext>;
+// Classification needs no knowledge sources and never reads private staff work.
+export function buildClassificationContext(conversation: Conversation, mailbox: Mailbox) {
+  const { documents: _documents, ...data } = buildAiContext(conversation, mailbox, []).data;
+  return { data, hash: createHash("sha256").update(JSON.stringify(data)).digest("hex") };
+}
+export type ClassificationContext = ReturnType<typeof buildClassificationContext>;
+export const classificationSchema = z.object({
+  category: z.enum(categories),
+  priority: z.enum(priorities),
+  reason: z.string().max(2000),
+}).strict();
 export const aiOutputSchema = z.object({
   text: z.string().max(12000),
   sourceIds: z.array(z.string()).max(8),
   needsHuman: z.boolean(),
   reason: z.string().max(2000),
-  category: z.enum(categories),
-  priority: z.enum(priorities),
 }).strict();
 
 export function validateAiOutput(value: unknown, context: AiContext) {
@@ -63,7 +72,5 @@ export function validateAiOutput(value: unknown, context: AiContext) {
     sources,
     needsHuman: answer.needsHuman || !hasKnowledge,
     reason: hasKnowledge ? answer.reason : "Brak zatwierdzonego źródła rozwiązania. Przekaż sprawę człowiekowi lub uzupełnij wiedzę tej skrzynki.",
-    category: answer.category,
-    priority: answer.priority,
   };
 }

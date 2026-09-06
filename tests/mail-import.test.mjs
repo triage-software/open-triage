@@ -22,18 +22,22 @@ test("ponowienie importu oraz zmiana UIDVALIDITY nie duplikują wiadomości", ()
   const s = state();
   const first = message("first");
   assert.equal(mergeIncomingMail(s, "test", [first]), 1);
+  const jobId = s.conversations[0].aiTriage.id;
+  assert.equal(s.conversations[0].aiTriage.status, "pending");
   assert.equal(mergeIncomingMail(s, "test", [first]), 0);
   const sameMessageNewUid = structuredClone(first);
   sameMessageNewUid.email.id = "new-validity-uid";
   assert.equal(mergeIncomingMail(s, "test", [sameMessageNewUid]), 0);
   assert.equal(s.conversations.length, 1);
   assert.equal(s.conversations[0].publicRevision, 1);
+  assert.equal(s.conversations[0].aiTriage.id, jobId);
 });
 
 test("odpowiedź dołącza do wątku i otwiera go, zachowując pracę zespołu", () => {
   const s = state();
   mergeIncomingMail(s, "test", [message("first")]);
   const conversation = s.conversations[0];
+  const jobId = conversation.aiTriage.id;
   conversation.status = "Zakończone";
   conversation.assigneeId = "anna";
   conversation.comments.push({ id: "note", body: "Tylko dla zespołu" });
@@ -42,6 +46,8 @@ test("odpowiedź dołącza do wątku i otwiera go, zachowując pracę zespołu",
   assert.equal(s.conversations.length, 1);
   assert.equal(conversation.emails.length, 2);
   assert.equal(conversation.publicRevision, 2);
+  assert.equal(conversation.aiTriage.status, "pending");
+  assert.notEqual(conversation.aiTriage.id, jobId);
   assert.equal(conversation.status, "W toku");
   assert.equal(conversation.assigneeId, "anna");
   assert.equal(conversation.comments[0].body, "Tylko dla zespołu");

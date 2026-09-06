@@ -103,7 +103,7 @@ export function AiSettingsView() {
             <small>Klucz jest zapisany wyłącznie na lokalnym serwerze. Puste pole zachowuje zapisany klucz. <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noreferrer">Utwórz klucz w OpenRouter ↗</a></small>
           </label>
           <label className="settings-field" htmlFor="openrouter-model">
-            <span>Model odpowiedzi</span>
+            <span>Model klasyfikacji i odpowiedzi</span>
             <select id="openrouter-model" value={model} disabled={!!busy} onChange={(event) => { setModel(event.target.value); setNotice(""); }}>
               {!models.some((item) => item.id === model) && <option value={model}>{model}</option>}
               {models.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.id}</option>)}
@@ -128,7 +128,7 @@ export function AiSettingsView() {
       <section className="settings-data-note">
         <h3>Co otrzymuje model?</h3>
         <p>Temat i ostatnie 12 publicznych wiadomości oraz do 8 zatwierdzonych dokumentów z wiedzy tej skrzynki. Długie wiadomości i dokumenty są skracane. Komentarze wewnętrzne i szkice pozostają w aplikacji.</p>
-        <p>Każda propozycja czeka na sprawdzenie przez pracownika. Generowanie nie wysyła maila. Zapisany klucz i model są wspólne dla całego zespołu.</p>
+        <p>Nowe maile automatycznie otrzymują kategorię i priorytet na podstawie publicznej rozmowy, bez korzystania z bazy wiedzy. Klasyfikacja i generowanie draftu to osobne, płatne wywołania OpenRouter. Draft powstaje na żądanie i czeka na sprawdzenie oraz użycie przez pracownika. AI nie wysyła maili. Zapisany klucz i model są wspólne dla całego zespołu.</p>
       </section>
     </div>
   );

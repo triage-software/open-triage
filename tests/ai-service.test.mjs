@@ -41,7 +41,7 @@ test("generowanie: trwały wynik, jedna równoległa operacja, brak nadpisania n
       assert.equal(url, "https://openrouter.ai/api/v1/chat/completions");
       assert.ok(!options.body.includes("INTERNAL_SECRET"));
       calls++; await beforeResponse();
-      return Response.json({ choices: [{ finish_reason: "stop", message: { content: JSON.stringify({ text: noSource ? "" : "Propozycja odpowiedzi", sourceIds: noSource ? [] : ["doc"], needsHuman: noSource, reason: "Uzasadnienie", category: "Licencja", priority: "Normalny" }) } }], usage: { cost: 0.002, prompt_tokens: 100, completion_tokens: 20, total_tokens: 120 } });
+      return Response.json({ choices: [{ finish_reason: "stop", message: { content: JSON.stringify({ text: noSource ? "" : "Propozycja odpowiedzi", sourceIds: noSource ? [] : ["doc"], needsHuman: noSource, reason: "Uzasadnienie" }) } }], usage: { cost: 0.002, prompt_tokens: 100, completion_tokens: 20, total_tokens: 120 } });
     };
     let release;
     const gate = new Promise((resolve) => { release = resolve; });
@@ -59,6 +59,9 @@ test("generowanie: trwały wynik, jedna równoległa operacja, brak nadpisania n
     assert.equal(publicState.conversations[0].aiSuggestion.text, "Propozycja odpowiedzi");
     assert.equal(publicState.conversations[0].emails.length, 1);
     assert.equal(publicState.drafts.length, 0);
+    assert.equal(publicState.conversations[0].category, "Inne");
+    assert.equal(publicState.conversations[0].priority, "Normalny");
+    assert.equal(publicState.conversations[0].aiTriage, undefined);
     assert.deepEqual(publicState.aiUsageSummary, { requests: 1, cost: 0.002, promptTokens: 100, completionTokens: 20, totalTokens: 120 });
     assert.ok(!JSON.stringify(publicState).includes("sk-or-v1-"));
     assert.ok(!(await readFile(filename, "utf8")).includes("sk-or-v1-"));

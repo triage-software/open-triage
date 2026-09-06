@@ -1,4 +1,4 @@
-import type { AiSettingsPublic, AiSuggestion, AiUsage, AiUsageSummary } from "./ai-types";
+import type { AiSettingsPublic, AiSuggestion, AiTriage, AiUsage, AiUsageSummary } from "./ai-types";
 
 export const categories = [
   "Awaria",
@@ -117,6 +117,7 @@ export interface Conversation {
   suggestionDismissed: boolean;
   closureVersion: number;
   aiSuggestion?: AiSuggestion;
+  aiTriage?: AiTriage;
 }
 export interface Draft {
   key: string;

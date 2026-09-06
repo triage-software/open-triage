@@ -26,8 +26,6 @@ export interface AiKeyUsage {
 }
 export interface AiSuggestion extends Suggestion {
   reason: string;
-  category: Category;
-  priority: Priority;
   model: string;
   generatedAt: string;
   generatedBy: string;
@@ -36,6 +34,24 @@ export interface AiSuggestion extends Suggestion {
   knowledgeStamp: string;
   contextHash: string;
   usage?: AiUsage;
+}
+export interface AiClassification {
+  category: Category;
+  priority: Priority;
+  reason: string;
+  model: string;
+  generatedAt: string;
+  settingsVersion: number;
+  contextHash: string;
+  usage?: AiUsage;
+}
+export interface AiTriage {
+  id: string;
+  status: "pending" | "applied" | "manual" | "error";
+  attempts: number;
+  nextAttemptAt?: string;
+  error?: string;
+  result?: AiClassification;
 }
 export function knowledgeStamp(knowledge: KnowledgeDocument[], mailboxId: string) {
   return knowledge.filter((doc) => doc.mailboxId === mailboxId && doc.versions.at(-1)?.status === "approved")
