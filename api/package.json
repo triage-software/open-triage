@@ -1,0 +1,43 @@
+{
+  "name": "open-triage-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "open-triage Nest.js API: auth, multi-tenancy, triage domain",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "start:worker": "node dist/worker/worker.js",
+    "dev": "tsx watch src/main.ts",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:dev": "prisma migrate dev",
+    "generate": "prisma generate",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@prisma/client": "^6.0.0",
+    "argon2": "^0.44.0",
+    "bullmq": "^6.3.4",
+    "html-to-text": "10.0.1",
+    "imapflow": "1.7.8",
+    "ioredis": "^5.4.1",
+    "mailparser": "3.9.20",
+    "nodemailer": "9.1.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/html-to-text": "^9.0.4",
+    "@types/mailparser": "^3.4.6",
+    "@types/node": "^24.0.0",
+    "@types/nodemailer": "^8.0.1",
+    "prisma": "^6.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.0"
+  }
+}

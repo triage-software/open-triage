@@ -33,7 +33,7 @@ import { categories, priorities, statuses } from "@/lib/types";
 import type { Conversation, Variant } from "@/lib/types";
 import { isActiveUser } from "@/lib/team";
 import { DemoContext, useDemo, useDemoData } from "./demo-context";
-import { Avatar, PriorityBadge, relativeTime } from "./ui";
+import { Avatar, PriorityBadge, relativeTime, TriageMark } from "./ui";
 import { ConversationDetail } from "./conversation-detail";
 import { KnowledgeView, NotificationsView } from "./workspace-views";
 import { AiSettingsView } from "./ai-settings-view";
@@ -175,7 +175,7 @@ export function SupportApp() {
     return (
       <div className="boot-screen">
         <div className="brand-symbol">
-          <Mail size={25} />
+          <TriageMark size={25} />
         </div>
         <h1>Open Triage</h1>
         <p>{data.error || "Przygotowujemy wspólną skrzynkę…"}</p>
@@ -240,7 +240,7 @@ export function SupportApp() {
         <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
           <a className="brand" href="/prototype/support">
             <span className="brand-symbol">
-              <Mail size={20} strokeWidth={1.8} />
+              <TriageMark size={20} />
             </span>
             <span>
               open<span className="brand-light">triage</span>

@@ -1,0 +1,215 @@
+/* open-triage MVP app styles — layout metrics only.
+   Colors are NOT defined here: every --ot-* color token comes from the shared
+   design-system layer (src/app/tokens.css), which is the single owner of the
+   --ot-* namespace. Layout-only variables live below. */
+:root {
+  --ot-sidebar-w: 240px;
+  --ot-list-w: 340px;
+  --ot-topbar-h: 56px;
+  --ot-radius-shell: 12px;
+  --ot-radius-card: 8px;
+  /* status colors: DS ramp steps, AA with white chip text */
+  --ot-status-new: var(--ot-primary);
+  --ot-status-in-progress: var(--brand-presets-gold-9);
+  --ot-status-waiting: var(--ot-ink);
+  --ot-status-resolved: var(--brand-presets-green-8);
+  --ot-row-h: 64px;
+}
+
+/* ---------- auth ---------- */
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px;
+  background: linear-gradient(135deg, var(--ot-primary), var(--ot-accent-2));
+  color: #fff;
+}
+.auth-brand strong { font-size: 28px; }
+.auth-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  padding: 48px;
+  max-width: 460px;
+  width: 100%;
+  margin: 0 auto;
+}
+.auth-card h1 { font-size: 20px; margin: 0 0 16px; }
+.auth-form { display: flex; flex-direction: column; gap: 12px; }
+.auth-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ot-muted); }
+.auth-form input {
+  padding: 10px 12px;
+  border: 1px solid var(--ot-line);
+  border-radius: var(--ot-radius-card);
+  font-size: 14px;
+}
+.auth-form input:focus-visible, .auth-form button:focus-visible,
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--ot-primary);
+  outline-offset: 2px;
+}
+.auth-error { color: var(--ot-danger); font-size: 13px; margin: 0; }
+.btn-primary {
+  background: var(--ot-primary);
+  color: #fff;
+  border: 0;
+  border-radius: var(--ot-radius-card);
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-secondary {
+  background: transparent;
+  color: var(--ot-ink);
+  border: 1px solid var(--ot-line);
+  border-radius: var(--ot-radius-card);
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.btn-secondary:hover { background: var(--ot-bg); }
+.auth-switch, .auth-panel p { font-size: 13px; color: var(--ot-muted); }
+.auth-panel a { color: var(--ot-primary); }
+.lang-toggle { display: inline-flex; gap: 4px; }
+.lang-toggle button {
+  border: 1px solid var(--ot-line);
+  background: transparent;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--ot-muted);
+}
+.lang-toggle button.lang-active { background: var(--ot-primary); border-color: var(--ot-primary); color: #fff; }
+
+/* ---------- workspace ---------- */
+.workspace {
+  display: grid;
+  grid-template-columns: var(--ot-sidebar-w) var(--ot-list-w) 1fr;
+  min-height: 100vh;
+  background: var(--ot-bg);
+  color: var(--ot-ink);
+}
+.workspace-sidebar {
+  background: var(--ot-sunken);
+  border-right: 1px solid var(--ot-line);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  gap: 16px;
+}
+.workspace-identity strong { display: block; font-size: 15px; }
+.workspace-identity span { font-size: 12px; color: var(--ot-muted); }
+.workspace-sidebar nav { display: flex; flex-direction: column; gap: 2px; }
+.workspace-sidebar nav a {
+  padding: 8px 10px;
+  border-radius: var(--ot-radius-card);
+  font-size: 13px;
+  color: var(--ot-ink);
+}
+.workspace-sidebar nav a:hover { background: rgba(0,0,0,0.05); }
+.workspace-sidebar nav a.nav-active { background: var(--ot-primary); color: #fff; }
+.workspace-footer { margin-top: auto; display: flex; flex-direction: column; gap: 8px; font-size: 12px; }
+.workspace-footer button {
+  text-align: left;
+  color: var(--ot-muted);
+  padding: 6px 10px;
+  border-radius: var(--ot-radius-card);
+}
+.workspace-footer button:hover { background: rgba(0,0,0,0.05); color: var(--ot-ink); }
+
+.conversation-list {
+  border-right: 1px solid var(--ot-line);
+  overflow-y: auto;
+  background: var(--ot-container);
+}
+.conversation-list ul { list-style: none; margin: 0; padding: 0; }
+.conv-row {
+  min-height: var(--ot-row-h);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--ot-line);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.conv-row:hover { background: var(--ot-bg); }
+.conv-row.conv-selected { background: var(--ot-accent-bg-soft); }
+.conv-row-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.conv-subject { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conv-row-bottom { display: flex; justify-content: space-between; font-size: 12px; color: var(--ot-muted); }
+.chip {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #fff;
+  white-space: nowrap;
+}
+.chip-open { background: var(--ot-status-new); }
+.chip-pending { background: var(--ot-status-waiting); }
+.chip-resolved { background: var(--ot-status-resolved); }
+
+.thread-pane { overflow-y: auto; background: var(--ot-bg); }
+.thread { padding: 24px; max-width: 720px; }
+.thread h2 { font-size: 17px; margin-top: 0; }
+.thread-messages { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.bubble {
+  border-radius: var(--ot-radius-card);
+  padding: 10px 14px;
+  max-width: 85%;
+  font-size: 13px;
+}
+.bubble header { font-size: 11px; color: var(--ot-muted); margin-bottom: 4px; }
+.bubble-in { background: var(--ot-container); border: 1px solid var(--ot-line); align-self: flex-start; }
+.bubble-out { background: var(--ot-primary); color: #fff; align-self: flex-end; }
+.bubble-out header { color: rgba(255,255,255,0.75); }
+.composer { display: flex; flex-direction: column; gap: 10px; }
+.composer label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ot-muted); }
+.composer textarea {
+  padding: 10px 12px;
+  border: 1px solid var(--ot-line);
+  border-radius: var(--ot-radius-card);
+  font: inherit;
+  font-size: 13px;
+  resize: vertical;
+}
+.empty-state { padding: 40px 20px; text-align: center; color: var(--ot-muted); }
+.empty-state p { font-weight: 600; margin-bottom: 4px; }
+.state-error { padding: 20px; color: var(--ot-danger); }
+.skeleton-row { padding: 16px; color: var(--ot-muted); }
+
+/* ---------- admin ---------- */
+.admin { padding: 24px 32px; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+.admin-topbar { display: flex; align-items: center; gap: 16px; }
+.admin-topbar h1 { font-size: 20px; margin: 0; margin-right: auto; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.admin-table th, .admin-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--ot-line); }
+.admin-table th { color: var(--ot-muted); font-weight: 500; font-size: 12px; text-align: left; }
+.admin-table tr:hover { background: var(--ot-bg); }
+.admin-users { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.admin-users li { display: flex; gap: 10px; align-items: center; padding: 8px 12px; background: var(--ot-container); border: 1px solid var(--ot-line); border-radius: var(--ot-radius-card); }
+.admin label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ot-muted); margin-bottom: 10px; max-width: 320px; }
+.admin input[type="text"], .admin input[type="search"] {
+  padding: 8px 12px;
+  border: 1px solid var(--ot-line);
+  border-radius: var(--ot-radius-card);
+  font: inherit;
+  font-size: 13px;
+}
+.admin input[type="search"] { max-width: 320px; margin-bottom: 12px; }
+.admin-checkbox { flex-direction: row !important; align-items: center; gap: 8px !important; }
+.admin section h2 { font-size: 15px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .btn-primary, .chip { transition: background 120ms ease; }
+}
