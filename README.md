@@ -1,31 +1,31 @@
 # Open Triage
 
-Lokalny, interaktywny prototyp wspólnej skrzynki wsparcia. Next.js 16, React 19, TypeScript i Tailwind CSS 4.
+A local, interactive prototype of a shared support inbox. Next.js 16, React 19, TypeScript and Tailwind CSS 4.
 
-**Aktualny stan:** `support@example.com` odbiera prawdziwe wiadomości przez IMAP i wysyła odpowiedzi przez SMTP. Kopia odpowiedzi trafia do folderu „Wysłane” tej samej skrzynki. Serwer sprawdza INBOX przy uruchomieniu i co 30 sekund; panel odświeża dane co 2 sekundy. Wiadomości demonstracyjne zostały usunięte.
+**Current state:** `support@example.com` receives real messages over IMAP and sends replies over SMTP. A copy of each reply is placed in the "Sent" folder of the same mailbox. The server checks INBOX on startup and every 30 seconds; the panel refreshes data every 2 seconds. Demo messages have been removed.
 
-## Uruchomienie
+## Running it
 
-Wymagany Node.js 20.9 lub nowszy (zalecana wersja LTS).
+Node.js 20.9 or newer is required (an LTS version is recommended).
 
 ```sh
 npm install
 npm run dev
 ```
 
-Otwórz [lokalne demo](http://127.0.0.1:3000/prototype/support?variant=inbox).
+Open the [local demo](http://127.0.0.1:3000/prototype/support?variant=inbox).
 
-Panel jest dostępny tylko na lokalnym komputerze. Uruchamiaj jeden proces serwera dla tego katalogu danych. Nie uruchamiaj jednocześnie `npm run dev` i `npm start` na tych samych danych.
+The panel is available only on the local machine. Run a single server process for this data directory. Do not run `npm run dev` and `npm start` at the same time against the same data.
 
-Połączenie pocztowe korzysta z `.env.local` (poza Gitem, tylko po stronie serwera). W nowej kopii projektu skopiuj `.env.example` do `.env.local` i uzupełnij hasło. Skonfigurowana skrzynka to `support@example.com`, serwer `mail.example.com`, port `993`, z weryfikowanym TLS. Dane logowania nie trafiają do przeglądarki ani do `state.json`.
+The mail connection uses `.env.local` (outside Git, server-side only). In a fresh copy of the project, copy `.env.example` to `.env.local` and fill in the password. The configured mailbox is `support@example.com`, server `mail.example.com`, port `993`, with verified TLS. Login credentials never reach the browser or `state.json`.
 
-SMTP używa tego samego serwera na porcie `465` z TLS. `TRIAGE_SMTP_PASSWORD` może pozostać puste, aby użyć hasła IMAP tej samej skrzynki. `TRIAGE_IMAP_SENT_FOLDER=SENT` wskazuje folder wysłanych home.pl; bez tej zmiennej aplikacja szuka folderu oznaczonego przez serwer jako `\Sent`.
+SMTP uses the same server on port `465` with TLS. `TRIAGE_SMTP_PASSWORD` may be left empty to use the same mailbox's IMAP password. `TRIAGE_IMAP_SENT_FOLDER=SENT` points to home.pl's sent folder; without this variable the app looks for the folder the server marks as `\Sent`.
 
-Na pasku skrzynki widać stan IMAP i czas ostatniego udanego sprawdzenia. „Sprawdź pocztę” pobiera nowe maile od razu. Automatyczny odbiór działa, kiedy uruchomiony jest lokalny serwer, również po zamknięciu kart przeglądarki. Skrzynka jest otwierana do odczytu: aplikacja nie usuwa wiadomości z serwera ani nie zmienia flag przeczytania.
+The mailbox bar shows the IMAP status and the time of the last successful check. "Check mail" fetches new mail immediately. Automatic receiving works whenever the local server is running, even after browser tabs are closed. The mailbox is opened read-only: the app does not delete messages from the server or change read flags.
 
-Odpowiedź ma wspólne `From` i `Reply-To`: `support@example.com`. Pracownik jest zapisany jako autor w panelu. `Message-ID`, `In-Reply-To` i `References` wiążą odpowiedź z wątkiem także w innych klientach pocztowych. Po przyjęciu przez SMTP identyczna wiadomość MIME jest zapisywana przez IMAP do „Wysłanych”. Nie trzeba dodawać własnego adresu do DW. Komentarze wewnętrzne nie są dodawane do wysyłki ani kopii.
+A reply has a shared `From` and `Reply-To`: `support@example.com`. The staff member is recorded as the author in the panel. `Message-ID`, `In-Reply-To` and `References` tie the reply to the thread in other mail clients as well. Once accepted by SMTP, the identical MIME message is saved via IMAP to "Sent". There is no need to add your own address to CC. Internal comments are not added to the outgoing message or its copy.
 
-Przy `npm run dev` działa [React Grab](https://github.com/aidenybai/react-grab), ładowany z lokalnego pakietu. Najedź kursorem na element interfejsu, naciśnij `⌘C` (Windows/Linux: `Ctrl+C`) i wklej skopiowany kontekst do rozmowy. Narzędzie dołącza komponent i położenie w kodzie. W buildzie produkcyjnym jest wyłączone.
+With `npm run dev`, [React Grab](https://github.com/aidenybai/react-grab) runs, loaded from a local package. Hover over a UI element, press `⌘C` (Windows/Linux: `Ctrl+C`), and paste the copied context into the conversation. The tool attaches the component and its location in the code. It is disabled in the production build.
 
 ```sh
 npm run typecheck
@@ -33,61 +33,61 @@ npm run build
 npm start
 ```
 
-## Co można sprawdzić
+## What you can check out
 
-- Trzy warianty: [skrzynka](http://127.0.0.1:3000/prototype/support?variant=inbox), [kolejka](http://127.0.0.1:3000/prototype/support?variant=queue), [tablica](http://127.0.0.1:3000/prototype/support?variant=board). Układy przełącza się zakładkami w zwartym pasku nad rozmowami. W trybie developerskim działają także strzałki klawiatury poza polami edycji.
-- Trzy skrzynki: `hello@opentriage.com`, `hello@opentriage.com` i `support@example.com`. IMAP i SMTP działają dla ostatniej; dwie pozostałe czekają na podłączenie.
-- Zespół: Michał Kluska, Jan Kowalski i Anna Nowak. Wybór pracownika oraz nowe przypisania obejmują wyłącznie te trzy osoby.
-- Przypisywanie rozmów, priorytety, kategorie, statusy, wyszukiwanie i filtry.
-- Treść maila zajmuje główną część panelu. Podpowiedź AI i pusty edytor są domyślnie zwinięte. Zapisany szkic otwiera edytor; ręczne zwinięcie zachowuje tekst.
-- Osobne szkice odpowiedzi i komentarzy dla każdego pracownika. Szkice zapisują się po 450 ms bez pisania i przed wysłaniem. Wskaźnik pod edytorem potwierdza zapis.
-- Podpisy Ireny, Jana i Michała są widoczne pod edytorem odpowiedzi. Wysyłka utrwala podpis autora i tworzy równolegle bezpieczną wersję tekstową oraz HTML; podpis nie jest częścią szkicu ani komentarza wewnętrznego.
-- HTML wiadomości i stopki jest kompilowany lokalnie przez MJML (`src/lib/mail-template.ts`), z walidacją szablonu, responsywnymi kolumnami i obsługą Outlooka. Pełny dokument wraz ze stylami trafia do części HTML MIME; zwykły tekst pozostaje alternatywą. Kompilator działa tylko na serwerze, bez zewnętrznego API ani pobierania fontów.
-- Ustawienia → Podpisy pracowników: wybierz osobę, edytuj pełny MJML, odśwież podgląd i zapisz. Treść odpowiedzi jest dodawana nad podpisem; alternatywa tekstowa powstaje z szablonu. Zapis jest lokalny i sprawdza wersję, aby uniknąć nadpisania równoległych zmian. Zmiany podpisu nie modyfikują już przygotowanych ani wysłanych wiadomości.
-- Komentarze wewnętrzne z linkami przewijającymi do konkretnego wpisu. Linki są lokalne, nie udostępniają panelu przez Internet.
-- Propozycje odpowiedzi przez OpenRouter, ze źródłami z zatwierdzonej wiedzy tej samej skrzynki. Wybór modelu i zapis klucza w Ustawieniach.
-- Akceptacja, odrzucanie i edycja dokumentów z historią wersji. Zakończenie rozmowy tworzy archiwum oraz propozycję wiedzy do zatwierdzenia.
-- Powiadomienia w panelu i podglądy Google Chat / Discord, bez wysyłki.
+- Three layouts: [inbox](http://127.0.0.1:3000/prototype/support?variant=inbox), [queue](http://127.0.0.1:3000/prototype/support?variant=queue), [board](http://127.0.0.1:3000/prototype/support?variant=board). Layouts are switched via tabs in a compact bar above the conversations. In development mode, keyboard arrows also work outside of editable fields.
+- Three mailboxes: `hello@opentriage.com`, `hello@opentriage.com` and `support@example.com`. IMAP and SMTP work for the last one; the other two are awaiting connection.
+- The team: Michał Kluska, Jan Kowalski and Anna Nowak. Staff selection and new assignments cover only these three people.
+- Assigning conversations, priorities, categories, statuses, search and filters.
+- The email content takes up the main part of the panel. The AI suggestion and the empty editor are collapsed by default. A saved draft opens the editor; collapsing it manually keeps the text.
+- Separate reply and comment drafts for each staff member. Drafts save after 450 ms of no typing and before sending. An indicator under the editor confirms the save.
+- The signatures of Anna, Jan and Michał are shown below the reply editor. Sending preserves the author's signature and creates a safe plain-text version alongside the HTML version at the same time; the signature is not part of the draft or of internal comments.
+- The HTML of the message and footer is compiled locally by MJML (`src/lib/mail-template.ts`), with template validation, responsive columns, and Outlook support. The full document, including styles, goes into the HTML part of the MIME message; plain text remains the alternative. The compiler runs only on the server, with no external API and no font downloads.
+- Settings → Staff Signatures: choose a person, edit the full MJML, refresh the preview, and save. The reply content is added above the signature; the text alternative is generated from the template. Saving is local and checks the version to avoid overwriting concurrent changes. Signature changes do not modify already-prepared or already-sent messages.
+- Internal comments with links that scroll to the specific entry. The links are local and do not expose the panel over the Internet.
+- Reply suggestions via OpenRouter, sourced from the approved knowledge base of the same mailbox. Model selection and key storage are in Settings.
+- Accepting, rejecting and editing documents with version history. Closing a conversation creates an archive and a knowledge proposal for approval.
+- In-panel notifications and Google Chat / Discord previews, without actually sending them.
 
 ## OpenRouter
 
-W [Ustawieniach](http://127.0.0.1:3000/prototype/support?view=settings) wklej klucz OpenRouter, wybierz model i zapisz. Domyślny model nowej instalacji to `z-ai/glm-5.3`; lista pochodzi z publicznego katalogu OpenRouter i obejmuje modele obsługujące strukturalne odpowiedzi JSON. „Sprawdź połączenie” weryfikuje klucz oraz obecność modelu w katalogu, bez płatnego generowania. Dostęp dostawcy i saldo są ostatecznie weryfikowane podczas generowania.
+In [Settings](http://127.0.0.1:3000/prototype/support?view=settings), paste your OpenRouter key, choose a model, and save. The default model for a new installation is `z-ai/glm-5.3`; the list comes from OpenRouter's public catalog and includes models that support structured JSON responses. "Check connection" verifies the key and the model's presence in the catalog, without paid generation. Provider access and balance are ultimately verified during generation.
 
-Sekcja „Koszty AI” pokazuje w USD koszt żądań rozliczonych przez ten panel, liczbę żądań i tokenów oraz łączne użycie i pozostały limit aktualnego klucza zwracane przez OpenRouter. Lokalny rejestr kosztów jest trwały w `state.json` i obejmuje także odpowiedzi odrzucone po generowaniu; ponowne wyświetlenie zapisanej propozycji nie nalicza żądania drugi raz. Dane klucza mogą obejmować użycie poza panelem. Pozostały limit dotyczy budżetu klucza i nie jest przedstawiany jako saldo całego konta.
+The "AI Costs" section shows, in USD, the cost of requests billed through this panel, the number of requests and tokens, and the total usage and remaining limit of the current key as returned by OpenRouter. The local cost log is persisted in `state.json` and also includes responses rejected after generation; redisplaying a saved suggestion does not charge for the request a second time. Key data may include usage outside the panel. The remaining limit applies to the key's budget and is not presented as the balance of the whole account.
 
-Klucz jest wspólny dla zespołu, zapisany atomowo w `data/prototype/settings/openrouter.json` z uprawnieniami `0600`, poza Gitem. Nie trafia do publicznego API, `state.json` ani pamięci przeglądarki. Puste pole zachowuje zapisany klucz; „Usuń klucz” wyłącza generowanie. Zmiany ustawień mają kontrolę wersji, aby inna karta nie nadpisała ich przypadkowo.
+The key is shared across the team, saved atomically to `data/prototype/settings/openrouter.json` with `0600` permissions, outside Git. It is not sent to any public API, to `state.json`, or to browser storage. Leaving the field empty keeps the saved key; "Remove key" disables generation. Settings changes are version-controlled so that another tab does not accidentally overwrite them.
 
-W rozmowie kliknij „Generuj propozycję”. Model otrzymuje temat, adresy, ostatnie 12 publicznych wiadomości (do 6000 znaków każda) i do 8 zatwierdzonych dokumentów tej samej skrzynki (do 8000 znaków każdy), wybranych według zgodności słów z pytaniem. Maile klienta są przekazywane jako nieufna treść użytkownika, a zatwierdzone dokumenty jako wiążąca wiedza systemowa. Jeśli istnieje trafny dokument, kontrakt odpowiedzi wymaga niepustego tekstu i co najmniej jednego prawidłowego źródła. Komentarze, szkice, aktywności i niezatwierdzona wiedza nie są przekazywane. Generowanie rozlicza OpenRouter według wybranego modelu.
+In a conversation, click "Generate suggestion". The model receives the subject, addresses, the last 12 public messages (up to 6000 characters each), and up to 8 approved documents from the same mailbox (up to 8000 characters each), selected by word match against the question. Customer emails are passed as untrusted user content, while approved documents are passed as binding system knowledge. If a relevant document exists, the response contract requires non-empty text and at least one valid source. Comments, drafts, activity, and unapproved knowledge are not passed in. Generation is billed by OpenRouter according to the selected model.
 
-Prompt jest ułożony pod cache: stałe instrukcje, wybrane dokumenty w stabilnej kolejności, a na końcu zmienna rozmowa. `session_id` wspólny dla skrzynki pomaga OpenRouter kierować żądania do tego samego dostawcy. Cache zależy od modelu i dostawcy; panel nie raportuje jeszcze liczby trafień. Selekcja wiedzy jest lokalna i oparta na słowach — nie korzysta z drugiego modelu ani embeddingów.
+The prompt is arranged for caching: fixed instructions, selected documents in a stable order, and the variable conversation at the end. A `session_id` shared per mailbox helps OpenRouter route requests to the same provider. Caching depends on the model and provider; the panel does not yet report the number of hits. Knowledge selection is local and word-based — it does not use a second model or embeddings.
 
-AI ma dwie niezależne części. Po odebraniu nowego maila (również odpowiedzi w istniejącym wątku) serwer automatycznie przypisuje kategorię i priorytet. Klasyfikacja korzysta wyłącznie z publicznej rozmowy i nie wymaga bazy wiedzy. Osobny panel pokazuje jej status i pozwala ponowić przypisanie przyciskiem. Dotychczasowe rozmowy nie są masowo przeklasyfikowywane — można uruchomić klasyfikację ręcznie.
+AI has two independent parts. Upon receiving a new email (including a reply within an existing thread), the server automatically assigns a category and priority. Classification uses only the public conversation and does not require the knowledge base. A separate panel shows its status and lets you retry the assignment with a button. Existing conversations are not bulk-reclassified — classification can be run manually.
 
-Import zapisuje oczekującą klasyfikację razem z mailem i kursorem. Jeden proces obsługuje kolejkę bez blokowania odbioru poczty; praca wznawia się po restarcie. Brak klucza pozostawia zadanie oczekujące, a błędy AI powodują ponowienia z opóźnieniem od 30 sekund do 5 minut. Ręczne ustawienie kategorii lub priorytetu unieważnia trwającą klasyfikację. Kolejny nowy mail uruchamia nową ocenę. Nieaktualny wynik po zmianie rozmowy lub ustawień nie jest stosowany. Klasyfikacja i draft są osobnymi płatnymi wywołaniami tego samego wybranego modelu i trafiają do rejestru kosztów.
+Import saves a pending classification along with the email and cursor. A single process handles the queue without blocking mail receiving; work resumes after a restart. A missing key leaves the task pending, and AI errors trigger retries with a delay ranging from 30 seconds to 5 minutes. Manually setting the category or priority invalidates an in-progress classification. The next new email triggers a fresh evaluation. A stale result after the conversation or settings change is not applied. Classification and drafting are separate paid calls to the same selected model and are both recorded in the cost log.
 
-Draft powstaje dopiero po kliknięciu „Generuj propozycję” i zawiera tekst oraz źródła, bez klasyfikacji. „Użyj draftu” przenosi tekst do własnego szkicu; wysłanie maila pozostaje osobną akcją. Brak udokumentowanego rozwiązania skutkuje eskalacją do człowieka i powiadomieniem w panelu. Błędne źródła lub niepełny JSON są odrzucane. Automatyczna klasyfikacja nie generuje draftu, nie zmienia szkiców i nie wysyła poczty.
+A draft is created only after clicking "Generate suggestion" and contains text and sources, without classification. "Use draft" moves the text into the staff member's own draft; sending the email remains a separate action. Lacking a documented solution results in escalation to a human and a notification in the panel. Invalid sources or incomplete JSON are rejected. Automatic classification does not generate a draft, does not change drafts, and does not send mail.
 
-Wynik jest zapisany przy rozmowie i dostępny dla zespołu po restarcie. Równoległe generowanie dla tego samego kontekstu współdzieli jedną operację. „Wygeneruj ponownie” świadomie zamawia kolejną odpowiedź. Zmiana publicznej rozmowy, wiedzy lub ustawień podczas generowania odrzuca nieaktualny wynik; edytowane szkice pozostają nietknięte. Zmiany po wygenerowaniu blokują użycie starej propozycji.
+The result is saved with the conversation and available to the team after a restart. Concurrent generation for the same context shares a single operation. "Regenerate" deliberately requests another response. Changing the public conversation, knowledge, or settings during generation discards the stale result; edited drafts remain untouched. Changes made after generation block the use of the old suggestion.
 
-## Współpraca w kilku kartach
+## Collaborating across multiple tabs
 
-Przypisania, szkice, komentarze i obecność działają również na prawdziwych rozmowach pobranych z IMAP.
+Assignments, drafts, comments, and presence also work on real conversations fetched from IMAP.
 
-1. Otwórz tę samą rozmowę w dwóch kartach lub oknach.
-2. Wybierz innego pracownika w dolnej części menu w każdej karcie. Wybór jest zapisany w `sessionStorage`, osobno dla karty.
-3. Przydziel sprawę, dodaj komentarz albo przygotuj szkic. Dane odświeżają się co dwie sekundy.
-4. Gdy wpłynie kolejna wiadomość lub ktoś odpowie w wątku, pracownik zachowuje swój szkic i widzi ostrzeżenie. Musi przejrzeć aktualny wątek przed wysłaniem nowej odpowiedzi.
+1. Open the same conversation in two tabs or windows.
+2. Choose a different staff member in the lower part of the menu in each tab. The selection is saved in `sessionStorage`, separately per tab.
+3. Assign the case, add a comment, or prepare a draft. Data refreshes every two seconds.
+4. When another message arrives or someone replies in the thread, the staff member keeps their draft and sees a warning. They must review the current thread before sending a new reply.
 
-Obecność jest sygnalizowana z widocznego okna, odświeżana co 15 sekund i wygasa po 45 sekundach. Ukryte lub zamknięte karty przestają sygnalizować obecność. Zmieniona odpowiedź i dokument są kontrolowane ponownie na serwerze, niezależnie od ostrzeżeń w interfejsie. Identyfikator operacji chroni przed powtórzeniem tej samej wysyłki lub komentarza.
+Presence is signaled from a visible window, refreshed every 15 seconds, and expires after 45 seconds. Hidden or closed tabs stop signaling presence. A changed reply and document are re-checked on the server regardless of warnings shown in the interface. An operation identifier protects against repeating the same send or comment.
 
-Przypisanie wskazuje osobę odpowiedzialną, ale nie blokuje innym odpowiadania. Tożsamości są symulowane; demo nie implementuje uwierzytelniania ani rzeczywistych uprawnień.
+An assignment indicates the responsible person but does not prevent others from replying. Identities are simulated; the demo does not implement authentication or real permissions.
 
-## Dane na dysku
+## Data on disk
 
 ```text
 data/prototype/
   state.json
-  settings/openrouter.json  # prywatny klucz i model, uprawnienia 0600
+  settings/openrouter.json  # private key and model, 0600 permissions
   mail/test/<uid-validity>/<uid>.eml
   generations/<generation-id>/
     knowledge/<mailbox-id>/<document-id>/v1.md
@@ -95,32 +95,32 @@ data/prototype/
     archives/<mailbox-id>/<conversation-id>-v1.md
 ```
 
-`state.json` jest źródłem stanu aplikacji. Operacje są wykonywane kolejno w jednym procesie, a pliki podmieniane atomowo. Wersje Markdown powstają przed potwierdzeniem zmiany. Uruchomienie API odtwarza kopie Markdown ze stanu, jeśli ich brakuje. Obecność jest ulotna i resetuje się po restarcie.
+`state.json` is the source of the application's state. Operations are executed sequentially in a single process, and files are swapped atomically. Markdown versions are created before a change is confirmed. Starting the API restores the Markdown copies from the state if they are missing. Presence is ephemeral and resets after a restart.
 
-Import dopisuje wiadomości i zapisuje kursor IMAP w tej samej kolejce, zachowując zmiany zespołu. Identyfikatory UID/UIDVALIDITY i Message-ID chronią przed duplikatami po ponowieniu lub restarcie. References/In-Reply-To łączą odpowiedzi z istniejącymi rozmowami w tej samej skrzynce; identyczny temat sam w sobie nie łączy spraw. Nowa wiadomość otwiera ponownie zakończoną rozmowę. Oryginały MIME, łącznie z załącznikami, można pobrać jako `.eml` z osi rozmowy. Panel pokazuje treść tekstową (HTML jest konwertowany do tekstu), bez uruchamiania skryptów lub pobierania obrazów śledzących z maila.
+Import appends messages and saves the IMAP cursor in the same queue, preserving the team's changes. UID/UIDVALIDITY and Message-ID identifiers protect against duplicates after a retry or restart. References/In-Reply-To link replies to existing conversations within the same mailbox; an identical subject alone does not link cases. A new message reopens a closed conversation. Original MIME sources, including attachments, can be downloaded as `.eml` from the conversation timeline. The panel shows the plain-text content (HTML is converted to text), without running scripts or fetching tracking images from the email.
 
-Wysyłki mają trwały dziennik `outbox` w `state.json` z identyfikatorem operacji i oryginalnym MIME. Nie jest on zwracany w publicznym stanie panelu. Rezerwacja sprawdza rewizję rozmowy i szkicu, a sieciowe operacje SMTP/IMAP odbywają się poza kolejką zapisów, więc nie blokują komentarzy i pozostałych rozmów. Nowszy szkic lub mail odebrany w trakcie wysyłki nie jest nadpisywany.
+Sends have a persistent `outbox` log in `state.json` with an operation identifier and the original MIME. It is not returned in the panel's public state. The reservation checks the conversation and draft revision, and network SMTP/IMAP operations happen outside the write queue, so they do not block comments and other conversations. A newer draft or an email received during sending is not overwritten.
 
-Po przyjęciu odpowiedzi przez SMTP błąd IMAP ponawia tylko zapis kopii, co 30 sekund. Przed powtórzeniem APPEND sprawdzany jest Message-ID w „Wysłanych”, także przez odczyt nagłówków FETCH, gdy home.pl nie zwraca istniejącej wiadomości w SEARCH HEADER. Przy utracie potwierdzenia SMTP albo przerwaniu procesu podczas wysyłki panel oznacza wynik jako niepewny i blokuje kolejne wysyłki w tej rozmowie do wyjaśnienia. Samo SMTP nie gwarantuje dokładnie jednej dostawy po zerwaniu połączenia; aplikacja nie zgaduje wyniku i nie wysyła automatycznie drugi raz.
+After a reply is accepted by SMTP, an IMAP error only retries the copy save, every 30 seconds. Before repeating APPEND, the Message-ID is checked in "Sent", including by reading headers via FETCH when home.pl does not return the existing message in a SEARCH HEADER. If SMTP confirmation is lost or the process is interrupted during sending, the panel marks the result as uncertain and blocks further sends in that conversation until it is resolved. SMTP itself does not guarantee exactly-once delivery after a dropped connection; the app does not guess the outcome and does not automatically send a second time.
 
-Generator wiadomości oraz przycisk i operacja przywracania demo zostały usunięte. Pierwsze uruchomienie tworzy wyłącznie konfigurację skrzynek i zespołu. Katalog danych jest wyłączony z Git.
+The message generator and the demo restore button and operation have been removed. The first run creates only the mailbox and team configuration. The data directory is excluded from Git.
 
-Migracja wersji 4 usuwa rozpoznane rozmowy przykładowe z `support@example.com` oraz powiązane szkice, powiadomienia, archiwa i wiedzę demonstracyjną. Ręcznie dodane dokumenty oraz rozmowy spoza zestawu przykładowego pozostają. Kopia poprzedniego stanu w `data/prototype/backups/` i historyczne pliki Markdown nie są wczytywane do panelu.
+The version 4 migration removes recognized sample conversations from `support@example.com` along with related drafts, notifications, archives, and demo knowledge. Manually added documents and conversations outside the sample set remain. The copy of the previous state in `data/prototype/backups/` and historical Markdown files are not loaded into the panel.
 
-Zmiana zespołu również zapisuje kopię JSON. Poprzednie profile demo stają się nieaktywne, ale zachowują autorstwo wpisów, wcześniejsze przypisania i szkice. Przypisanie do dawnego profilu można przekazać jednej z trzech osób z aktualnego zespołu. Karta z wybranym dawnym profilem przechodzi na Michała.
+Changing the team also saves a JSON copy. Previous demo profiles become inactive but retain entry authorship, prior assignments, and drafts. An assignment to a former profile can be handed off to one of the three people on the current team. A tab with a former profile selected switches to Michał.
 
-Wiadomości publiczne oraz komentarze mają rozdzielone typy i operacje. Archiwum oznacza komentarze jako wewnętrzne; propozycje odpowiedzi i wiedzy nie korzystają z ich treści.
+Public messages and comments have separate types and operations. The archive marks comments as internal; reply and knowledge suggestions do not use their content.
 
-## Granice prototypu
+## Prototype boundaries
 
-Podłączone są IMAP i SMTP skrzynki testowej oraz OpenRouter po zapisaniu klucza w ustawieniach. Supabase i GitHub nie są podłączone. Do czasu zakończenia automatycznej klasyfikacji nowe sprawy mają kategorię „Inne” i normalny priorytet. Klasyfikacja działa tylko przy uruchomionym serwerze i skonfigurowanym OpenRouter; kolejka plikowa jest przeznaczona dla jednego procesu, nie wielu replik. Draft nie jest generowany automatycznie. Propozycja wpisu do wiedzy przy zakończeniu rozmowy powstaje lokalnie z publicznej odpowiedzi i wymaga zatwierdzenia. Foldery inne niż INBOX nie są importowane, ale odpowiedzi z panelu są zapisywane do „Wysłanych”. Załączniki odebrane są dostępne w `.eml`; edytor wysyła odpowiedzi tekstowe.
+The test mailbox's IMAP and SMTP, and OpenRouter once a key is saved in settings, are connected. Supabase and GitHub are not connected. Until automatic classification finishes, new cases have the category "Other" and normal priority. Classification only works with the server running and OpenRouter configured; the file-based queue is designed for a single process, not multiple replicas. A draft is not generated automatically. The knowledge-entry proposal on closing a conversation is created locally from the public reply and requires approval. Folders other than INBOX are not imported, but replies from the panel are saved to "Sent". Received attachments are available in `.eml`; the editor sends text-only replies.
 
-## Weryfikacja
+## Verification
 
-Testy (Node.js 22.18+): `npm test`. Obejmują import, deduplikację, wątki, izolację skrzynek, szkice, komentarze i MIME, a także wspólnego nadawcę, potwierdzenie SMTP, oddzielne ponawianie kopii, przerwane połączenia, konflikty i identyczną treść kopii w „Wysłanych”. Testy wysyłki korzystają z podstawionych transportów; nie wysyłają maili do klientów. Logowanie SMTP i folder `SENT` sprawdzono na koncie testowym bez wysyłania wiadomości.
+Tests (Node.js 22.18+): `npm test`. They cover import, deduplication, threads, mailbox isolation, drafts, comments and MIME, as well as the shared sender, SMTP confirmation, separate copy retries, dropped connections, conflicts, and identical copy content in "Sent". Sending tests use substituted transports; they do not send emails to clients. SMTP login and the `SENT` folder were verified on the test account without sending messages.
 
-Po ręcznej wysyłce z panelu sprawdzono także prawdziwą kopię w `SENT`: jeden Message-ID, identyczny MIME oraz wspólne adresy From/Reply-To. Sprawdzenie ponownego zapisu wykonało odczyt istniejącej kopii bez APPEND i bez kolejnego SMTP.
+After a manual send from the panel, the real copy in `SENT` was also checked: a single Message-ID, identical MIME, and shared From/Reply-To addresses. A check of the re-save behavior performed a read of the existing copy without APPEND and without another SMTP call.
 
-Przeprowadzono build, kontrolę typów oraz sprawdzenie przez lokalne API: 10 równoległych komentarzy, niezależne szkice, konflikt równoległych odpowiedzi, ponowienie tej samej operacji, poprawnego nadawcę, izolację komentarzy, archiwum i wersjonowanie wiedzy. Przepływy edytora, komentarzy i linków sprawdzono także w przeglądarce.
+A build, type check, and verification through the local API were carried out: 10 parallel comments, independent drafts, a conflict between parallel replies, retrying the same operation, correct sender, comment isolation, archive and knowledge versioning. Editor, comment, and link flows were also checked in the browser.
 
-Testy AI używają fikcyjnego transportu i tymczasowego katalogu danych. Sprawdzają prywatny zapis klucza i restart, konflikty ustawień, izolację wiedzy i komentarzy, walidację źródeł, wymuszenie użycia trafnej wiedzy, obsługę błędów API, zapis propozycji, wspólne generowanie w kilku kartach, eskalację oraz odrzucenie wyniku po zmianie rozmowy, wiedzy lub ustawień. Testy automatycznej klasyfikacji obejmują odbiór przez atrapę IMAP, brak klucza i wiedzy, deduplikację wywołań, ręczne zmiany, nowszy mail w trakcie generowania, trwałe ponowienia, powiadomienie krytyczne oraz brak zmian szkiców i wysyłki. Testy podpisów sprawdzają dane wszystkich pracowników, utrwalenie podpisu autora, kodowanie HTML oraz oba warianty MIME.
+AI tests use a fake transport and a temporary data directory. They check private key storage and restart, settings conflicts, knowledge and comment isolation, source validation, enforcement of relevant-knowledge usage, API error handling, suggestion storage, shared generation across multiple tabs, escalation, and rejection of the result after a change to the conversation, knowledge, or settings. Automatic classification tests cover receiving via a mock IMAP, missing key and knowledge, deduplication of calls, manual changes, a newer email arriving during generation, persistent retries, a critical notification, and no changes to drafts or sending. Signature tests check the data of all staff members, persistence of the author's signature, HTML encoding, and both MIME variants.

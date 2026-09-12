@@ -1,13 +1,13 @@
-# Pytanie prototypu
+# Prototype Question
 
-Który układ najlepiej pomaga zespołowi 5–10 osób obsługiwać trzy skrzynki i konsultować odpowiedzi?
+Which layout best helps a team of 5–10 people handle three mailboxes and consult on replies?
 
-| Wariant  | Główna organizacja                     |
-| -------- | -------------------------------------- |
-| Skrzynka | Lista wiadomości i rozmowa obok siebie |
-| Kolejka  | Priorytet, następnie zgłoszenie        |
-| Tablica  | Status i obciążenie zespołu            |
+| Variant | Main Organization                    |
+| ------- | ------------------------------------- |
+| Inbox   | Message list and conversation side by side |
+| Queue   | Priority, then ticket                 |
+| Board   | Status and team workload              |
 
-Warianty mają wspólny model danych, edytor, komentarze, obecność i bazę wiedzy. Kod znajduje się pod demonstracyjną trasą `/prototype/support`; lokalna persystencja została dodana celowo do oceny współpracy i procesu akceptacji wiedzy.
+The variants share a common data model, editor, comments, presence, and knowledge base. The code lives under the demo route `/prototype/support`; local persistence was added intentionally to evaluate collaboration and the knowledge-approval process.
 
-**Werdykt:** do uzupełnienia po ocenie przez zespół. Po wybraniu układu należy usunąć odrzucone warianty i przełącznik, a rozwiązania przeznaczone do dalszego użycia przygotować do rzeczywistego uwierzytelniania, bazy danych oraz integracji mailowych.
+**Verdict:** to be filled in after team evaluation. Once a layout is chosen, the rejected variants and the switcher should be removed, and the solutions intended for continued use should be prepared for real authentication, a real database, and mail integrations.
