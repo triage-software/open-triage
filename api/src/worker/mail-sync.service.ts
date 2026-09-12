@@ -1,3 +1,4 @@
+import { Injectable, Logger } from '@nestjs/common';
 import { ImapFlow } from 'imapflow';
 import { PrismaService } from '../prisma.service';
 import { QUEUES, JOBS } from './queues';
@@ -13,6 +14,7 @@ import { statusAfterInbound, capThreadIds } from './threading';
 
 const BATCH_SIZE = 20; // ported from the prototype (20 messages per batch)
 
+@Injectable()
 export class MailSyncService {
   private readonly logger = new Logger(MailSyncService.name);
 
@@ -236,5 +238,4 @@ export class MailSyncService {
   }
 }
 
-import { Logger } from '@nestjs/common';
 import { isThreadMatch } from './threading';

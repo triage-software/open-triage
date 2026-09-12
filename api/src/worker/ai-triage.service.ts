@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { KnowledgeIndexService } from '../knowledge/knowledge-index.service';
 import {
@@ -19,6 +19,7 @@ const DEFAULT_MODEL = 'z-ai/glm-5.3';
  * lands on Conversation aiCategory/aiPriority/aiReason, drafts on aiDraft*
  * columns; drafts are never auto-sent.
  */
+@Injectable()
 export class AiTriageService {
   private readonly logger = new Logger(AiTriageService.name);
 

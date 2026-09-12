@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 import { ImapFlow } from 'imapflow';
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import {
   mailboxConfig,
@@ -20,6 +20,7 @@ import type { Producer, SendReplyPayload, SentCopyPayload } from './producer';
  * Idempotency: Message.deliveryKey (unique) is the send identity; a repeated
  * job finds the stored row and only tops up the Sent-copy side task.
  */
+@Injectable()
 export class MailSendService {
   private readonly logger = new Logger(MailSendService.name);
 
