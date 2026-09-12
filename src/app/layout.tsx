@@ -4,10 +4,12 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import "./globals.css";
 import "../styles/mvp.css";
+import "../styles/workspace-pages.css";
 
 export const metadata: Metadata = {
-  title: "Open Triage",
-  description: "Shared-inbox triage for teams. Self-hostable, AI-assisted.",
+  title: "Open Triage · Wspólna skrzynka",
+  description:
+    "Otwarte triaż AI dla zespołów wsparcia: jedna wspólna skrzynka, jeden spokojniejszy dzień.",
 };
 
 export default async function RootLayout({

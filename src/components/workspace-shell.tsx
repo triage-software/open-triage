@@ -59,7 +59,7 @@ export function WorkspaceShell({ user, tenant, logoutAction, chrome, labels }: W
         <nav aria-label="Main">
           <a href="/" className="nav-active">{labels.inbox}</a>
           <a href="/knowledge">{labels.knowledge}</a>
-          <a href="/team">{labels.team}</a>
+          {user.role !== 'agent' && <a href="/team">{labels.team}</a>}
           <a href="/settings">{labels.settings}</a>
         </nav>
         <div className="workspace-footer">
