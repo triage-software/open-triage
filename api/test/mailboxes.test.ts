@@ -25,6 +25,7 @@ import {
   MailboxVerifyError,
   MailboxVerifyExceptionFilter,
 } from '../src/mailboxes/mailbox-verify.service';
+import { validateConnectionFields } from '../src/mailboxes/mailboxes.controller';
 
 const SESSION_SECRET = 'test-secret-for-mailboxes-harness';
 
@@ -150,6 +151,34 @@ describe('Mailboxes: serializer never leaks secrets', () => {
         assert.ok(!String(out[key]).includes('topsecret'), 'plaintext leaked');
       }
     }
+  });
+});
+
+describe('Mailboxes: imap connection-field contract', () => {
+  test('create: imap without host/user is rejected', () => {
+    assert.throws(() => validateConnectionFields({ kind: 'imap' }, false));
+    assert.throws(() => validateConnectionFields({ kind: 'imap', host: 'h' }, false));
+    assert.doesNotThrow(() =>
+      validateConnectionFields({ kind: 'imap', host: 'h', user: 'u' }, false),
+    );
+  });
+  test('update: absent host/user means "keep stored value"', () => {
+    // Rename-only PATCH must pass — regression for live smoke failure
+    // (partial update treated missing host/user as empty).
+    assert.doesNotThrow(() => validateConnectionFields({ kind: 'imap' }, true));
+    assert.doesNotThrow(() => validateConnectionFields({ kind: 'imap', user: undefined }, true));
+    // explicit null/empty on an imap mailbox is invalid (Zod also rejects null
+    // upstream; this is defense-in-depth at the boundary)
+    assert.throws(() => validateConnectionFields({ kind: 'imap', host: null }, true));
+    assert.throws(() => validateConnectionFields({ kind: 'imap', host: '' }, true));
+    assert.throws(() => validateConnectionFields({ kind: 'imap', user: null }, true));
+    assert.doesNotThrow(() =>
+      validateConnectionFields({ kind: 'imap', host: 'new', user: 'new' }, true),
+    );
+  });
+  test('channel mailboxes carry no connection fields', () => {
+    assert.doesNotThrow(() => validateConnectionFields({ kind: 'channel' }, false));
+    assert.doesNotThrow(() => validateConnectionFields({ kind: 'channel' }, true));
   });
 });
 
