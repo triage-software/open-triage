@@ -1,8 +1,10 @@
-import { Injectable, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, ConflictException, UnauthorizedException, BadRequestException, Inject } from '@nestjs/common';
 import * as argon2 from 'argon2';
 import { z } from 'zod';
 import { PrismaService } from '../prisma.service';
 import { generateSessionId, generateToken, slugify, signSessionId } from './crypto.util';
+import { Producer } from '../worker/producer';
+import { PRODUCER } from '../worker/producer.module';
 
 export const signupSchema = z.object({
   tenantName: z.string().min(2).max(80),
@@ -26,7 +28,10 @@ const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(PRODUCER) private producer: Producer,
+  ) {}
 
   /** POST /auth/signup — creates tenant + owner user (SPEC-0001, API contract). */
   async signup(input: unknown, res: { cookie: (n: string, v: string, o: object) => void }) {
@@ -57,9 +62,16 @@ export class AuthService {
       include: { tenant: true },
     });
 
-    // ADR-0002: e-mail verification token issued; delivery via SMTP is wired
-    // in the worker module — MVP logs it server-side for self-host operators.
-    console.info(`[auth] verification token for ${data.email}: ${verifyToken}`);
+    // ADR-0002: verification e-mail queued when SMTP is configured (worker
+    // delivers); otherwise the token is logged for self-host operators (MVP).
+    const queued = await this.producer.enqueueVerifyMail({
+      email: data.email,
+      token: verifyToken,
+      locale: data.locale,
+    });
+    if (!queued) {
+      console.info(`[auth] verification token for ${data.email}: ${verifyToken}`);
+    }
 
     await this.createSessionForUser(user.id, res);
     return {

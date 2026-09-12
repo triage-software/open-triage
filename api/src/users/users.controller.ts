@@ -8,6 +8,9 @@ import * as argon2 from 'argon2';
 import { PrismaService } from '../prisma.service';
 import { TenantRoleGuard, MinRole } from '../auth/guards';
 import { generateToken } from '../auth/crypto.util';
+import { Producer } from '../worker/producer';
+import { PRODUCER } from '../worker/producer.module';
+import { Inject } from '@nestjs/common';
 
 const inviteSchema = z.object({
   email: z.string().email(),
@@ -38,7 +41,10 @@ const TEMP_PASSWORD_BYTES = 12;
 @UseGuards(TenantRoleGuard)
 @MinRole('admin')
 export class UsersController {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(PRODUCER) private producer: Producer,
+  ) {}
 
   @Get()
   async list(@Req() req: Request) {
@@ -53,7 +59,9 @@ export class UsersController {
     return { data: users };
   }
 
-  /** POST /users — invite a teammate. Returns a one-time setup token (MVP: shown in UI). */
+  /** POST /users — invite a teammate. Queues the invite e-mail when SMTP is
+   *  configured; otherwise keeps the MVP contract (setupToken in the response
+   *  for the inviting admin to hand over). */
   @Post()
   async invite(@Req() req: Request, @Body() body: unknown) {
     const data = inviteSchema.parse(body);
@@ -62,25 +70,43 @@ export class UsersController {
     if (exists) throw new ConflictException({ code: 'EMAIL_TAKEN' });
 
     const setupToken = generateToken();
-    const user = await this.prisma.user.create({
-      data: {
-        tenantId,
-        email: data.email,
-        // invited user sets a real password on first login via setup token;
-        // MVP stores a random unusable hash until then.
-        passwordHash: await argon2.hash(generateToken(32), { type: argon2.argon2id }),
-        role: data.role,
-        locale: data.locale,
-        name: data.name ?? null,
-        invited: true,
-        verifyToken: setupToken,
-      },
-      select: { id: true, email: true, role: true, locale: true, createdAt: true },
-    });
+    const [user, tenant] = await Promise.all([
+      this.prisma.user.create({
+        data: {
+          tenantId,
+          email: data.email,
+          // invited user sets a real password on first login via setup token;
+          // MVP stores a random unusable hash until then.
+          passwordHash: await argon2.hash(generateToken(32), { type: argon2.argon2id }),
+          role: data.role,
+          locale: data.locale,
+          name: data.name ?? null,
+          invited: true,
+          verifyToken: setupToken,
+        },
+        select: { id: true, email: true, role: true, locale: true, createdAt: true },
+      }),
+      this.prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { name: true },
+      }),
+    ]);
+
+    const payload = {
+      tenantId,
+      email: data.email,
+      token: setupToken,
+      locale: data.locale,
+      inviterName: req.user!.email,
+      tenantName: tenant?.name ?? 'Open Triage',
+    };
+    const queued = await this.producer.enqueueInviteMail(payload);
+    if (queued) {
+      // SMTP delivery queued — the token no longer travels in the response.
+      return { data: user };
+    }
+    // MVP fallback (no SMTP): the inviting admin hands over the setup link.
     console.info(`[users] invite setup token for ${data.email}: ${setupToken}`);
-    // MVP (no SMTP worker yet): the token is returned to the inviting admin so
-    // the invitee can complete signup at /accept-invite. Remove when the
-    // worker delivers invite e-mails (see API-CONTRACT-OUTLINE).
     return { data: { ...user, setupToken } };
   }
 

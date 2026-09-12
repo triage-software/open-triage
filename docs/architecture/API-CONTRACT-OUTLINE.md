@@ -9,11 +9,11 @@ Conventions:
 - Zod DTOs parsed in services/controllers.
 
 ## Auth
-- `POST /auth/signup` {tenantName, email, password, locale} → creates tenant + owner user; verification token logged server-side in MVP (SMTP delivery is worker scope)
+- `POST /auth/signup` {tenantName, email, password, locale} → creates tenant + owner user; verification e-mail queued for SMTP delivery (worker); falls back to server-side token log when system SMTP is not configured
 - `POST /auth/login` {email, password} → sets session cookie
 - `POST /auth/logout`
 - `GET /auth/me` → user, tenant, role, locale
-- `POST /auth/accept-invite` {token, password, name?} → invited teammate sets password (one-time setup token from invite), account activated + verified, session set (QA-3). In MVP (no invite e-mail) the invite response carries `setupToken` for the inviting admin to hand over.
+- `POST /auth/accept-invite` {token, password, name?} → invited teammate sets password (one-time setup token from invite), account activated + verified, session set (QA-3). When SMTP is configured the invite e-mail carries the setup link and the invite response no longer includes `setupToken`; without SMTP the MVP fallback keeps returning it to the inviting admin.
 
 ## Platform admin (guard: PlatformAdminGuard; base `/admin`)
 - `GET /admin/tenants` · `PATCH /admin/tenants/:id` (plan, suspend)
@@ -25,8 +25,8 @@ Conventions:
 - `GET /conversations/:id` → conversation + messages + comments
 - `PATCH /conversations/:id` {status?, assigneeId?, priority?}
 - `POST /conversations/:id/comments` {body} (internal note)
-- `POST /conversations/:id/messages` {body, send:true} → SMTP send + store (agent+) — **post-MVP** (worker increment; exists in the Next.js prototype layer, ports into the worker module)
-- `POST /conversations/:id/ai-draft` → AI-drafted reply (agent+; async job, returns jobId) — **post-MVP**
+- `POST /conversations/:id/messages` {body, send:true} → SMTP send + store via the worker's `ot-mail-send` queue (agent+). Returns `202`-style `{data:{ok:true, deliveryKey, status:'queued'}}` — delivery is asynchronous and idempotent per `deliveryKey`; the Sent-folder copy is stored by the worker (`Message.sentCopyFolder`). `{send:false}` stores the message without delivery. Requires Redis (else `503 MAIL_QUEUE_UNAVAILABLE`).
+- `POST /conversations/:id/ai-draft` → AI reply suggestion (agent+; synchronous OpenRouter call, ≤90 s) — **shipped (worker increment)**; result persisted on the conversation (`aiDraft*`) and returned as `{data:{draft:{text,sourceIds,needsHuman,model,generatedAt}, classification}}`. Drafts are never auto-sent; no knowledge sources or no usable draft → `needsHuman:true`. Inbound mail is auto-classified by the worker (`aiCategory/aiPriority/aiReason` on the conversation).
 
 ## Mailboxes (admin of tenant)
 - `GET/POST /mailboxes` · `PATCH/DELETE /mailboxes/:id` (delete → 400 `MAILBOX_IN_USE` while conversations reference the mailbox)
@@ -38,10 +38,10 @@ Conventions:
 - `POST /knowledge-items/reindex` → rebuild Viking collection (admin)
 
 ## Team (admin of tenant)
-- `GET/POST /users` (invite) · `PATCH /users/:id` (role, locale) · `DELETE /users/:id`
+- `GET/POST /users` (invite; POST queues the invite e-mail when SMTP is configured — see Auth note on `setupToken`) · `PATCH /users/:id` (role, locale) · `DELETE /users/:id`
 
 ## Services (Nest modules)
-`AuthModule`, `TenantsModule`, `UsersModule`, `MailboxesModule`, `ConversationsModule`, `MessagesModule`, `KnowledgeModule`, `KnowledgeIndexService` (ADR-0003), `AiModule` (OpenRouter client), `PlatformAdminModule`, `MailSyncModule` (worker entrypoints: IMAP poll, SMTP send).
+`AuthModule`, `UsersModule`, `MailboxesModule`, `ConversationsModule`, `KnowledgeModule`, `KnowledgeIndexService` (ADR-0003), `PlatformAdminModule`, `ProducerModule` (BullMQ job producers; degrades without Redis), `WorkerModule` + worker services (`MailSyncService` IMAP poll, `MailSendService` SMTP send + Sent copy, `NotificationService` invite/verify mail, `AiTriageService` classify/draft; entrypoint `dist/worker/worker.js`).
 
 ## Multi-tenancy enforcement
 `TenantContextMiddleware` resolves tenant from session; `TenantPrismaService` middleware injects `tenant_id` filters (ADR-0001); `TenantRoleGuard` / `PlatformAdminGuard` on controllers. Tenant models have no public unscoped repository.
