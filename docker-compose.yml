@@ -1,4 +1,4 @@
-# open-triage MVP stack (DOCKER-COMPOSE-TOPOLOGY.md)
+# open-triage stack (DOCKER-COMPOSE-TOPOLOGY.md) — worker increment
 services:
   db:
     image: postgres:16-alpine
@@ -25,8 +25,9 @@ services:
   api:
     build: ./api
     environment:
-      DATABASE_URL: postgresql://opentriage:${POSTGRES_PASSWORD:-opentriage}@db:5432/opentriage
+      DATABASE_URL: postgresql://opentriage:***@db:5432/opentriage
       SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
+      REDIS_URL: redis://redis:6379
       API_URL: http://api:4000
       APP_URL: ${APP_URL:-http://localhost:3000}
       VIKINGDB_URL: ${VIKINGDB_URL:-http://vikingdb:1933}
@@ -36,6 +37,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     # Migrations run by entrypoint before serving (topology rule)
     command: ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node dist/main.js"]
     healthcheck:
@@ -43,6 +46,27 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+  worker:
+    build: ./api
+    # Same image as api, worker entrypoint (topology: BullMQ consumers).
+    # Migrations are guaranteed by the api service; the worker only consumes.
+    command: ["node", "dist/worker/worker.js"]
+    environment:
+      DATABASE_URL: postgresql://opentriage:***@db:5432/opentriage
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
+      REDIS_URL: redis://redis:6379
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      VIKINGDB_URL: ${VIKINGDB_URL:-http://vikingdb:1933}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      WORKER_POLL_INTERVAL_MS: ${WORKER_POLL_INTERVAL_MS:-30000}
+      NODE_ENV: production
+    depends_on:
+      api:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
   web:
     build: .
@@ -65,6 +89,24 @@ services:
     # external OpenViking endpoint instead, or remove this service; the API
     # degrades gracefully when the index is unreachable.
     profiles: ["with-vikingdb"]
+
+  # --- verification profile (docs/qa/e2e.sh mail scenarios) ---
+  # SMTP sink + IMAP source, kept out of the production-style default stack.
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+    profiles: ["verify-mail"]
+
+  greenmail:
+    image: greenmail/standalone:2.1
+    environment:
+      GREENMAIL_OPTS: "-Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.users=verify@localhost:verify -Dgreenmail.auth.disabled=false"
+      GREENMAIL_OPTS_STANDALONE: "-Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.users=verify@localhost:verify"
+    ports:
+      - "${GREENMAIL_IMAP_PORT:-3143}:3143"
+      - "${GREENMAIL_SMTP_PORT:-3025}:3025"
+    profiles: ["verify-mail"]
 
 volumes:
   pgdata:

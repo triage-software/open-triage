@@ -87,6 +87,106 @@ echo "== 7. i18n surface =="
 curl -s "$BASE/sign-in" | grep -q "Zaloguj\|Sign in" && ok "sign-in page renders localized text" || bad "sign-in page not localized"
 check "$(code "$BASE/definitely-not-a-route")" "404" "unknown route 404s"
 
+# ============================================================
+# == 8. mail flow (worker increment) — requires the verify-mail
+# profile services (mailpit + greenmail) reachable. When they are
+# not up, the whole mail block is skipped so the plain stack stays
+# green: MAILPIT_UI / GREENMAIL_IMAP envs point at the host ports.
+# ============================================================
+MAILPIT_UI="${MAILPIT_UI:-http://localhost:8025}"
+GREENMAIL_IMAP="${GREENMAIL_IMAP:-localhost:3143}"
+GREENMAIL_SMTP="${GREENMAIL_SMTP:-localhost:3025}"
+MAILPIT_API="$MAILPIT_UI/api/v1"
+MAIL_OK=1
+code "$MAILPIT_UI" >/dev/null 2>&1; MP=$?
+docker ps --format '{{.Names}}' 2>/dev/null | grep -q 'mailpit' || MP=1
+if [ "$MP" != "0" ]; then
+  MAIL_OK=0
+  echo "== 8. mail flow — SKIPPED (mailpit not reachable; run the verify-mail profile) =="
+fi
+
+if [ "$MAIL_OK" = "1" ]; then
+  echo "== 8. mail flow: seeded IMAP message → worker → conversation =="
+  # A real Message-ID so the second mail threads into the same conversation.
+  SEED_ID="<seed-$TS@klient.test>"
+  docker exec "$(docker ps --format '{{.Names}}' | grep greenmail | head -1)" sh -c "printf 'From: Klient Test <klient@klient.test>\nTo: verify@localhost\nSubject: Mail flow check\nMessage-ID: $SEED_ID\nDate: $(date -R)\nContent-Type: text/plain; charset=utf-8\n\nProszę o pomoc z logowaniem do konta.\n' | python3 -c 'import sys; sys.stdout.buffer.write(sys.stdin.buffer.read())' > /tmp/seed.eml && python3 - <<'PYEOF'
+import smtplib
+with open('/tmp/seed.eml','rb') as f: raw=f.read()
+s=smtplib.SMTP('127.0.0.1',3025)
+s.sendmail('klient@klient.test',['verify@localhost'],raw)
+s.quit()
+PYEOF" >/dev/null 2>&1 && ok "seed mail sent into greenmail" || bad "seed mail send failed"
+
+  # Create an IMAP mailbox pointing at greenmail (admin-only module).
+  req POST /mailboxes "$J/owner.txt" '{"name":"Verify box","host":"greenmail","port":3143,"secure":false,"user":"verify@localhost","password":"verify"}'
+  check "$REPLY_STATUS" "201" "POST /mailboxes (admin)"
+  MAILBOX_ID=$(echo "$REPLY_BODY" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p')
+  req POST "/mailboxes/$MAILBOX_ID/verify" "$J/owner.txt" '{}'
+  check "$REPLY_STATUS" "200" "POST /mailboxes/:id/verify (IMAP reachable)"
+
+  # Worker polls every WORKER_POLL_INTERVAL_MS (compose verify: 3s).
+  CONV_FOUND=0
+  for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+    sleep 2
+    req GET "/conversations?q=Mail+flow+check" "$J/owner.txt"
+    case "$REPLY_BODY" in
+      *Mail+flow+check*|*"Mail flow check"*) CONV_FOUND=1; break ;;
+    esac
+  done
+  if [ "$CONV_FOUND" = "1" ]; then
+    ok "worker imported IMAP mail into a conversation"
+    CONV_ID=$(echo "$REPLY_BODY" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p' | head -1)
+    # Auto-classification (only runs with OPENROUTER_API_KEY; presence is
+    # a soft check — no key means aiCategory stays null and that's fine).
+    req GET "/conversations/$CONV_ID" "$J/owner.txt"
+    case "$REPLY_BODY" in *'"direction":"in"'*) ok "inbound message stored with body";; *) bad "conversation detail: $REPLY_BODY";; esac
+  else
+    bad "worker did not import the IMAP mail within 30s"
+  fi
+
+  echo "== 9. mail flow: ai-draft endpoint =="
+  if [ "$CONV_FOUND" = "1" ]; then
+    req POST "/conversations/$CONV_ID/ai-draft" "$J/owner.txt" '{}'
+    case "$REPLY_STATUS" in
+      200|201) ok "ai-draft returns a draft envelope ($REPLY_STATUS)";;
+      502|504) ok "ai-draft reachable; provider error without usable key ($REPLY_STATUS)";;
+      *) bad "ai-draft unexpected status: $REPLY_STATUS $REPLY_BODY";;
+    esac
+  else
+    bad "ai-draft skipped — no conversation imported"
+  fi
+
+  echo "== 10. mail flow: agent reply → SMTP → mailpit =="
+  if [ "$CONV_FOUND" = "1" ]; then
+    req POST "/conversations/$CONV_ID/messages" "$J/owner.txt" '{"body":"Dzień dobry, pomoczymy w ciągu godziny.","send":true}'
+    check "$REPLY_STATUS" "201" "POST /conversations/:id/messages {send:true}"
+    case "$REPLY_BODY" in *deliveryKey*) ok "reply queued with deliveryKey";; *) bad "messages response: $REPLY_BODY";; esac
+    DELIVERY_KEY=$(echo "$REPLY_BODY" | sed -n 's/.*"deliveryKey":"\([^"]*\)".*/\1/p')
+    SENT=0
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+      sleep 2
+      COUNT=$(curl -s "$MAILPIT_API/messages?limit=50" 2>/dev/null | grep -o '"ID"' | wc -l | tr -d ' ')
+      [ "${COUNT:-0}" -ge 1 ] && { SENT=1; break; }
+    done
+    if [ "$SENT" = "1" ]; then
+      ok "worker delivered the reply into mailpit"
+      # Dedup: repeating the exact same send must not create a second message.
+      req POST "/conversations/$CONV_ID/messages" "$J/owner.txt" '{"body":"Dzień dobry, pomoczymy w ciągu godziny.","send":true}'
+      sleep 4
+      COUNT2=$(curl -s "$MAILPIT_API/messages?limit=50" 2>/dev/null | grep -o '"ID"' | wc -l | tr -d ' ')
+      [ "${COUNT2:-0}" -le "${COUNT:-0}" ] && ok "sent copy idempotent (no duplicates)" || bad "message count grew after duplicate: $COUNT2"
+    else
+      bad "worker did not deliver the reply to SMTP within 20s"
+    fi
+  fi
+
+  echo "== 11. mail flow: RBAC on the new endpoints =="
+  req POST "/conversations/nonexistent/messages" "$J/owner.txt" '{"body":"x","send":true}'
+  check "$REPLY_STATUS" "404" "messages on missing conversation → 404"
+  req POST "/conversations/nonexistent/ai-draft" "$J/agent2.txt" '{}'
+  check "$REPLY_STATUS" "404" "ai-draft on missing conversation → 404"
+fi
+
 echo
 echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" = "0" ]

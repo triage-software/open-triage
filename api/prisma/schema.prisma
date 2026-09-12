@@ -149,6 +149,13 @@ model Mailbox {
   active      Boolean     @default(true)
   lastSyncAt  DateTime?
   createdAt   DateTime    @default(now())
+  // worker increment (t_87a44da4): IMAP poll cursor + optional SMTP override.
+  // smtp* null → SMTP config falls back to the IMAP host/port/secure above.
+  imapUidValidity String?
+  imapLastUid     Int?
+  smtpHost        String?
+  smtpPort        Int?
+  smtpSecure      Boolean?
 
   tenant        Tenant        @relation(fields: [tenantId], references: [id])
   conversations Conversation[]
@@ -171,6 +178,14 @@ model Conversation {
   references    String[] @default([])
   lastMessageAt DateTime @default(now())
   createdAt     DateTime @default(now())
+  // worker increment (t_87a44da4): latest AI triage result + draft tracking.
+  aiCategory      String?
+  aiPriority      String?
+  aiReason        String?
+  aiDraftText     String?
+  aiDraftSourceIds String[] @default([])
+  aiDraftModel    String?
+  aiDraftAt       DateTime?
 
   tenant    Tenant    @relation(fields: [tenantId], references: [id])
   mailbox   Mailbox   @relation(fields: [mailboxId], references: [id])
@@ -196,6 +211,9 @@ model Message {
   messageId      String?    // RFC Message-ID of outbound mail
   inReplyTo      String?
   sentAt         DateTime   @default(now())
+  // worker increment (t_87a44da4): delivery idempotency + Sent-folder state.
+  deliveryKey    String?   @unique
+  sentCopyFolder String?
 
   conversation Conversation @relation(fields: [conversationId], references: [id])
 
