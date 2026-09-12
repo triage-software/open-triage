@@ -1,7 +1,9 @@
 import nodemailer from 'nodemailer';
 import { ImapFlow } from 'imapflow';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { PRODUCER } from './producer.module';
+import { Producer } from './producer';
 import {
   mailboxConfig,
   imapFlowOptions,
@@ -10,7 +12,7 @@ import {
 } from './mailbox-config';
 import { composeReplyRaw } from './mail-composer';
 import { statusAfterAgentSend, capThreadIds, outboundMessageId, replySubject } from './threading';
-import type { Producer, SendReplyPayload, SentCopyPayload } from './producer';
+import type { SendReplyPayload, SentCopyPayload } from './producer';
 
 /**
  * SMTP send ported from the proven prototype (mail-delivery.ts + mail-send.ts):
@@ -26,7 +28,7 @@ export class MailSendService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly producer: Producer,
+    @Inject(PRODUCER) private readonly producer: Producer,
   ) {}
 
   async sendReply(payload: SendReplyPayload): Promise<{ alreadyDone: boolean }> {

@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { KnowledgeIndexService } from '../knowledge/knowledge-index.service';
+import { Producer } from './producer';
+import { PRODUCER } from './producer.module';
 import {
   completeAiClassification,
   completeAiDraft,
