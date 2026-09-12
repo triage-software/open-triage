@@ -1,0 +1,10 @@
+node_modules/
+.next/
+data/
+api/
+docs/
+.env
+.env.local
+*.log
+Dockerfile
+docker-compose.yml

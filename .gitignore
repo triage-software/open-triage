@@ -6,3 +6,4 @@ data/prototype/
 !.env.example
 .DS_Store
 artifacts/
+dist/
