@@ -84,25 +84,31 @@ export function serializeMailbox(box: {
 }
 
 /** Enforces the imap-kind connection contract at the boundary (Zod can't). */
-function validateConnectionFields(
+export function validateConnectionFields(
   data: { kind: 'imap' | 'channel'; host?: string | null; user?: string | null },
   partial: boolean,
 ): void {
   if (data.kind === 'channel') return;
-  if (!partial) {
-    if (!data.host) {
-      throw new BadRequestException({ code: 'VALIDATION_ERROR', message: 'host: required for imap mailboxes' });
-    }
-    if (!data.user) {
-      throw new BadRequestException({ code: 'VALIDATION_ERROR', message: 'user: required for imap mailboxes' });
+  if (partial) {
+    // Update: absent keys mean "keep the stored value" — only reject when the
+    // client explicitly sends an empty host/user for an imap mailbox.
+    const hostEmpty = 'host' in data && (data.host === null || data.host === '');
+    const userEmpty = 'user' in data && (data.user === null || data.user === '');
+    if (hostEmpty || userEmpty) {
+      throw new BadRequestException({
+        code: 'VALIDATION_ERROR',
+        message: 'imap mailboxes require non-empty host and user',
+      });
     }
     return;
   }
-  if ((data.host ?? '') !== '' && (data.user ?? '') !== '') return;
-  throw new BadRequestException({
-    code: 'VALIDATION_ERROR',
-    message: 'imap mailboxes require non-empty host and user',
-  });
+  // Create: imap mailboxes need both.
+  if (!data.host) {
+    throw new BadRequestException({ code: 'VALIDATION_ERROR', message: 'host: required for imap mailboxes' });
+  }
+  if (!data.user) {
+    throw new BadRequestException({ code: 'VALIDATION_ERROR', message: 'user: required for imap mailboxes' });
+  }
 }
 
 @Controller('v1/mailboxes')
@@ -155,6 +161,7 @@ export class MailboxesController {
     if (!existing) throw new NotFoundException({ code: 'NOT_FOUND' });
 
     const patch: Prisma.MailboxUpdateInput = {};
+    if (data.kind !== undefined) patch.kind = data.kind;
     if (data.name !== undefined) patch.name = data.name;
     if (data.host !== undefined) patch.host = data.host;
     if (data.port !== undefined) patch.port = data.port;
