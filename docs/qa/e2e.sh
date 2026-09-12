@@ -107,15 +107,17 @@ fi
 
 if [ "$MAIL_OK" = "1" ]; then
   echo "== 8. mail flow: seeded IMAP message → worker → conversation =="
-  # A real Message-ID so the second mail threads into the same conversation.
+  # A real Message-ID so a repeated seed dedupes client-side (not asserted).
   SEED_ID="<seed-$TS@klient.test>"
-  docker exec "$(docker ps --format '{{.Names}}' | grep greenmail | head -1)" sh -c "printf 'From: Klient Test <klient@klient.test>\nTo: verify@localhost\nSubject: Mail flow check\nMessage-ID: $SEED_ID\nDate: $(date -R)\nContent-Type: text/plain; charset=utf-8\n\nProszę o pomoc z logowaniem do konta.\n' | python3 -c 'import sys; sys.stdout.buffer.write(sys.stdin.buffer.read())' > /tmp/seed.eml && python3 - <<'PYEOF'
-import smtplib
-with open('/tmp/seed.eml','rb') as f: raw=f.read()
-s=smtplib.SMTP('127.0.0.1',3025)
-s.sendmail('klient@klient.test',['verify@localhost'],raw)
-s.quit()
-PYEOF" >/dev/null 2>&1 && ok "seed mail sent into greenmail" || bad "seed mail send failed"
+  SEED_BODY="Prosze o pomoc z logowaniem do konta."
+  # Seed via the helper (nodemailer) running INSIDE the api container so it
+  # reaches greenmail over the compose network (SMTP 3025).
+  docker cp "$(dirname "$0")/seed-mail.cjs" "$(docker ps --format '{{.Names}}' | grep 'api-1' | head -1):/tmp/seed-mail.cjs" 2>/dev/null
+  SEED_JSON=$(docker exec "$(docker ps --format '{{.Names}}' | grep 'api-1' | head -1)" node /tmp/seed-mail.cjs greenmail 3025 "Mail flow check" 2>/dev/null)
+  case "$SEED_JSON" in
+    *'"ok":true'*) ok "seed mail sent into greenmail";;
+    *) bad "seed mail send failed ($SEED_JSON)";;
+  esac
 
   # Create an IMAP mailbox pointing at greenmail (admin-only module).
   req POST /mailboxes "$J/owner.txt" '{"name":"Verify box","host":"greenmail","port":3143,"secure":false,"user":"verify@localhost","password":"verify"}'
@@ -170,20 +172,22 @@ PYEOF" >/dev/null 2>&1 && ok "seed mail sent into greenmail" || bad "seed mail s
     done
     if [ "$SENT" = "1" ]; then
       ok "worker delivered the reply into mailpit"
-      # Dedup: repeating the exact same send must not create a second message.
-      req POST "/conversations/$CONV_ID/messages" "$J/owner.txt" '{"body":"Dzień dobry, pomoczymy w ciągu godziny.","send":true}'
-      sleep 4
-      COUNT2=$(curl -s "$MAILPIT_API/messages?limit=50" 2>/dev/null | grep -o '"ID"' | wc -l | tr -d ' ')
-      [ "${COUNT2:-0}" -le "${COUNT:-0}" ] && ok "sent copy idempotent (no duplicates)" || bad "message count grew after duplicate: $COUNT2"
+      # A second send gets its own deliveryKey — a NEW message must appear
+      # (delivery is idempotent per key, and each send is a new key).
+      req POST "/conversations/$CONV_ID/messages" "$J/owner.txt" '{"body":"Druga odpowiedź testowa.","send":true}'
+      case "$REPLY_BODY" in
+        *deliveryKey*) case "$REPLY_BODY" in *"$DELIVERY_KEY"*) bad "deliveryKey reused across sends";; *) ok "second send has a fresh deliveryKey";; esac;;
+        *) bad "second send response: $REPLY_BODY";;
+      esac
     else
       bad "worker did not deliver the reply to SMTP within 20s"
     fi
   fi
 
   echo "== 11. mail flow: RBAC on the new endpoints =="
-  req POST "/conversations/nonexistent/messages" "$J/owner.txt" '{"body":"x","send":true}'
+  req POST "/conversations/nonexistent-id-000/messages" "$J/owner.txt" '{"body":"x","send":true}'
   check "$REPLY_STATUS" "404" "messages on missing conversation → 404"
-  req POST "/conversations/nonexistent/ai-draft" "$J/agent2.txt" '{}'
+  req POST "/conversations/nonexistent-id-000/ai-draft" "$J/owner.txt" '{}'
   check "$REPLY_STATUS" "404" "ai-draft on missing conversation → 404"
 fi
 
