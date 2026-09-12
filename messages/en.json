@@ -1,0 +1,76 @@
+{
+  "auth": {
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "email": "E-mail",
+    "password": "Password",
+    "tenantName": "Company name",
+    "passwordHint": "At least 10 characters",
+    "signInTitle": "Sign in to open-triage",
+    "signUpTitle": "Create your workspace",
+    "noAccount": "No account yet?",
+    "haveAccount": "Already have an account?",
+    "submitSignIn": "Sign in",
+    "submitSignUp": "Create workspace",
+    "invalidCredentials": "Invalid e-mail or password",
+    "emailTaken": "This e-mail is already registered",
+    "passwordTooShort": "Password must be at least 10 characters",
+    "genericError": "Something went wrong. Try again."
+  },
+  "nav": {
+    "inbox": "Inbox",
+    "knowledge": "Knowledge base",
+    "team": "Team",
+    "settings": "Settings",
+    "logout": "Sign out"
+  },
+  "inbox": {
+    "title": "Inbox",
+    "empty": "No conversations yet",
+    "emptyCta": "Connect a channel to start receiving customer messages",
+    "searchPlaceholder": "Search conversations…",
+    "statusOpen": "Open",
+    "statusPending": "Pending",
+    "statusResolved": "Resolved",
+    "priorityLow": "Low",
+    "priorityNormal": "Normal",
+    "priorityHigh": "High",
+    "priorityUrgent": "Urgent",
+    "assignTo": "Assign to",
+    "unassigned": "Unassigned",
+    "reply": "Reply",
+    "internalNote": "Internal note",
+    "send": "Send",
+    "noteSaved": "Note added"
+  },
+  "admin": {
+    "title": "Platform administration",
+    "tenants": "Tenants",
+    "users": "Users",
+    "settings": "Global settings",
+    "searchPlaceholder": "Search tenants…",
+    "plan": "Plan",
+    "status": "Status",
+    "active": "Active",
+    "suspended": "Suspended",
+    "created": "Created",
+    "conversations": "Conversations",
+    "members": "Members",
+    "suspend": "Suspend",
+    "activate": "Activate",
+    "aiModel": "AI model",
+    "aiEnabled": "AI features enabled",
+    "save": "Save",
+    "saved": "Saved"
+  },
+  "states": {
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "retry": "Retry",
+    "empty": "Nothing here yet"
+  },
+  "lang": {
+    "en": "English",
+    "pl": "Polski"
+  }
+}

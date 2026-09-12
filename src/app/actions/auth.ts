@@ -1,0 +1,68 @@
+'use server';
+
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { apiFetch, errorOf } from '@/lib/api-client';
+
+export type AuthState = { error?: string };
+
+export async function signInAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const email = String(formData.get('email') ?? '');
+  const password = String(formData.get('password') ?? '');
+  const locale = String(formData.get('locale') ?? 'en');
+
+  const jar = await cookies();
+  const { status, body } = await apiFetch('/v1/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (status !== 200) {
+    const code = errorOf(body);
+    return { error: code === 'INVALID_CREDENTIALS' ? 'invalidCredentials' : 'genericError' };
+  }
+
+  // ADR-0004: locale from session — store the user's chosen locale
+  jar.set('ot_locale', locale, { httpOnly: false, sameSite: 'lax', path: '/' });
+  redirect('/');
+}
+
+export async function signUpAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const tenantName = String(formData.get('tenantName') ?? '');
+  const email = String(formData.get('email') ?? '');
+  const password = String(formData.get('password') ?? '');
+  const locale = String(formData.get('locale') ?? 'en');
+
+  if (password.length < 10) return { error: 'passwordTooShort' };
+
+  const jar = await cookies();
+  const { status, body } = await apiFetch('/v1/auth/signup', {
+    method: 'POST',
+    body: JSON.stringify({ tenantName, email, password, locale }),
+  });
+
+  if (status !== 201) {
+    const code = errorOf(body);
+    return { error: code === 'EMAIL_TAKEN' ? 'emailTaken' : 'genericError' };
+  }
+
+  jar.set('ot_locale', locale, { httpOnly: false, sameSite: 'lax', path: '/' });
+  redirect('/');
+}
+
+export async function logoutAction() {
+  const jar = await cookies();
+  await apiFetch('/v1/auth/logout', {
+    method: 'POST',
+    cookies: Object.fromEntries(jar.getAll().map((c) => [c.name, c.value])),
+  });
+  jar.delete('ot_locale');
+  redirect('/sign-in');
+}
+
+export async function setLocaleAction(locale: string) {
+  const jar = await cookies();
+  if (locale === 'en' || locale === 'pl') {
+    jar.set('ot_locale', locale, { httpOnly: false, sameSite: 'lax', path: '/' });
+  }
+}

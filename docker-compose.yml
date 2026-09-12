@@ -1,0 +1,71 @@
+# open-triage MVP stack (DOCKER-COMPOSE-TOPOLOGY.md)
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: opentriage
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opentriage}
+      POSTGRES_DB: opentriage
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opentriage"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "PING"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgresql://opentriage:${POSTGRES_PASSWORD:-opentriage}@db:5432/opentriage
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
+      API_URL: http://api:4000
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      VIKINGDB_URL: ${VIKINGDB_URL:-http://vikingdb:1933}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      NODE_ENV: production
+      API_PORT: 4000
+    depends_on:
+      db:
+        condition: service_healthy
+    # Migrations run by entrypoint before serving (topology rule)
+    command: ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node dist/main.js"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    environment:
+      API_URL: http://api:4000
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      NODE_ENV: production
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  vikingdb:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - vikingdata:/data
+    # OpenViking endpoint placeholder (ADR-0003). Set VIKINGDB_URL to an
+    # external OpenViking endpoint instead, or remove this service; the API
+    # degrades gracefully when the index is unreachable.
+    profiles: ["with-vikingdb"]
+
+volumes:
+  pgdata:
+  vikingdata:

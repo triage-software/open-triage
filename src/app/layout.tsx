@@ -1,24 +1,29 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
 import "./globals.css";
+import "../styles/mvp.css";
 
 export const metadata: Metadata = {
-  title: "Open Triage · Wspólna skrzynka",
-  description:
-    "Lokalne demo zespołowej obsługi maili. Trzy skrzynki, jeden spokojniejszy dzień.",
+  title: "Open Triage",
+  description: "Shared-inbox triage for teams. Self-hostable, AI-assisted.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getLocale();
   return (
-    <html lang="pl">
+    <html lang={locale}>
       <head>
         {process.env.NODE_ENV === "development" && (
           <Script src="/api/dev/react-grab" strategy="beforeInteractive" />
         )}
       </head>
-      <body>{children}</body>
+      <body>
+        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+      </body>
     </html>
   );
 }
