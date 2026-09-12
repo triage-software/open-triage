@@ -1,6 +1,6 @@
 // One-off: populate the local prototype demo with a few sample emails through
 // the same ingestion path the IMAP sync uses (saveMailSync -> mergeIncomingMail).
-// Usage: node --import ./tests/register-types.mjs scripts/seed-demo-mail.mjs
+// Usage: node --import ./scripts/seed-register.mjs scripts/seed-demo-mail.mjs
 import { saveMailSync } from "../src/lib/store.ts";
 
 const now = Date.now();
