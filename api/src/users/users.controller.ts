@@ -22,6 +22,16 @@ const patchUserSchema = z.object({
   name: z.string().max(120).nullable().optional(),
 });
 
+// PATCH /users/me — self-service only: name/locale. Role is deliberately
+// absent so no caller (including an admin patching their own record) can
+// escalate or change roles through the self-service endpoint.
+const patchMeSchema = z
+  .object({
+    name: z.string().max(120).nullable().optional(),
+    locale: z.enum(['en', 'pl']).optional(),
+  })
+  .strict();
+
 const TEMP_PASSWORD_BYTES = 12;
 
 @Controller('v1/users')
@@ -72,6 +82,22 @@ export class UsersController {
     // the invitee can complete signup at /accept-invite. Remove when the
     // worker delivers invite e-mails (see API-CONTRACT-OUTLINE).
     return { data: { ...user, setupToken } };
+  }
+
+  @Patch('me')
+  @MinRole('agent')
+  async patchMe(@Req() req: Request, @Body() body: unknown) {
+    // Self-service profile (any role): the tenant user may change only their
+    // own name/locale, scoped to req.user.userId — role is NOT editable here.
+    // Declared before @Patch(':id') so Express resolves /users/me to this
+    // handler instead of the id-patched one.
+    const data = patchMeSchema.parse(body);
+    const updated = await this.prisma.user.update({
+      where: { id: req.user!.userId },
+      data,
+      select: { id: true, email: true, name: true, role: true, locale: true },
+    });
+    return { data: updated };
   }
 
   @Patch(':id')
