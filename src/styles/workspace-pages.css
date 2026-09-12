@@ -1,0 +1,63 @@
+/* ---------- workspace sub-pages: /knowledge, /team, /settings ---------- */
+.workspace-page {
+  padding: 28px 36px;
+  overflow-y: auto;
+  background: var(--ot-bg);
+}
+.workspace-page header { margin-bottom: 20px; }
+.workspace-page header h1 { font-size: 20px; margin: 0; }
+.workspace-page header p { margin: 4px 0 0; font-size: 13px; color: var(--ot-muted); }
+.workspace-page-body { display: flex; flex-direction: column; gap: 16px; max-width: 860px; }
+
+.kb-toolbar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+.kb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.kb-row {
+  display: flex; justify-content: space-between; gap: 12px; align-items: center;
+  background: var(--ot-container); border: 1px solid var(--ot-line);
+  border-radius: var(--ot-radius-card); padding: 12px 14px;
+}
+.kb-row-main strong { display: block; font-size: 14px; }
+.kb-row-main small { color: var(--ot-muted); font-size: 12px; }
+.kb-row-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.kb-form { padding: 16px; background: var(--ot-container); border: 1px solid var(--ot-line); border-radius: var(--ot-radius-card); }
+.kb-form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ot-muted); margin-bottom: 10px; }
+.kb-form input, .kb-form textarea {
+  padding: 8px 12px; border: 1px solid var(--ot-line); border-radius: var(--ot-radius-card);
+  font: inherit; font-size: 13px;
+}
+.kb-form textarea { resize: vertical; }
+.kb-form-actions { display: flex; gap: 8px; align-items: center; }
+
+.team-invite { padding: 16px; background: var(--ot-container); border: 1px solid var(--ot-line); border-radius: var(--ot-radius-card); }
+.team-invite h2 { font-size: 15px; margin: 0 0 10px; }
+.team-invite label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ot-muted); margin-bottom: 10px; }
+.team-invite input, .team-invite select {
+  padding: 8px 12px; border: 1px solid var(--ot-line); border-radius: var(--ot-radius-card);
+  font: inherit; font-size: 13px;
+}
+.team-invite-row { display: flex; gap: 10px; align-items: flex-end; }
+.team-invite-row button { margin-bottom: 10px; }
+.team-invite-token { padding: 16px; background: var(--ot-container); border: 1px solid var(--ot-primary); border-radius: var(--ot-radius-card); }
+.team-invite-token label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ot-muted); margin: 10px 0; }
+.team-invite-token input { padding: 8px 12px; border: 1px solid var(--ot-line); border-radius: var(--ot-radius-card); font: inherit; font-size: 12px; width: 100%; }
+.team-table { background: var(--ot-container); border: 1px solid var(--ot-line); border-radius: var(--ot-radius-card); }
+.team-table select { padding: 4px 8px; border: 1px solid var(--ot-line); border-radius: 6px; font: inherit; font-size: 12px; }
+.team-table small { color: var(--ot-muted); }
+.team-row-off td { opacity: 0.55; }
+.team-confirm { display: inline-flex; gap: 8px; align-items: center; font-size: 12px; color: var(--ot-danger); }
+
+.settings { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.settings-card { padding: 16px; background: var(--ot-container); border: 1px solid var(--ot-line); border-radius: var(--ot-radius-card); }
+.settings-card h2 { font-size: 15px; margin: 0 0 10px; }
+.settings-card label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ot-muted); margin-bottom: 10px; }
+.settings-card input {
+  padding: 8px 12px; border: 1px solid var(--ot-line); border-radius: var(--ot-radius-card);
+  font: inherit; font-size: 13px;
+}
+.settings-card input:disabled { color: var(--ot-ink); background: var(--ot-bg); }
+.settings-card .lang-toggle { margin-bottom: 8px; }
+.settings-card form { margin-top: 4px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .kb-row, .team-invite-token { transition: border-color 120ms ease; }
+}
