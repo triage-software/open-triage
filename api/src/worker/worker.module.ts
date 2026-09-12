@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { KnowledgeModule } from '../knowledge/knowledge.module';
+import { PrismaService } from '../prisma.service';
 import { ProducerModule } from './producer.module';
 import { MailSyncService } from './mail-sync.service';
 import { MailSendService } from './mail-send.service';
@@ -13,7 +14,7 @@ import { AiTriageService } from './ai-triage.service';
  */
 @Module({
   imports: [ProducerModule, KnowledgeModule],
-  providers: [MailSyncService, MailSendService, NotificationService, AiTriageService],
+  providers: [PrismaService, MailSyncService, MailSendService, NotificationService, AiTriageService],
   exports: [ProducerModule, MailSyncService, MailSendService, NotificationService, AiTriageService],
 })
 export class WorkerModule {}
