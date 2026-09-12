@@ -1,8 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ImapFlow } from 'imapflow';
 import { PrismaService } from '../prisma.service';
 import { QUEUES, JOBS } from './queues';
-import type { Producer } from './producer';
+import { Producer } from './producer';
+import { PRODUCER } from './producer.module';
 import {
   mailboxConfig,
   imapFlowOptions,
@@ -20,7 +21,7 @@ export class MailSyncService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly producer: Producer,
+    @Inject(PRODUCER) private readonly producer: Producer,
   ) {}
 
   /** Enqueue a poll for every active mailbox with credentials. */
