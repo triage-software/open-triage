@@ -91,6 +91,9 @@ export class Producer {
   }
 
   async enqueueInviteMail(payload: InviteMailPayload): Promise<boolean> {
+    // No system SMTP configured → the worker could not deliver; the caller
+    // must keep the MVP fallback (setupToken in the response).
+    if (!process.env.SMTP_SYSTEM_HOST) return false;
     if (!this.notification) return false;
     try {
       await this.notification.add(JOBS.inviteMail, payload, { jobId: `invite-${payload.token}`, removeOnComplete: 500, removeOnFail: 500, attempts: 3 });
@@ -101,6 +104,8 @@ export class Producer {
   }
 
   async enqueueVerifyMail(payload: VerifyMailPayload): Promise<boolean> {
+    // Same rule as invite mail: no system SMTP → log-token fallback.
+    if (!process.env.SMTP_SYSTEM_HOST) return false;
     if (!this.notification) return false;
     try {
       await this.notification.add(JOBS.verifyMail, payload, { jobId: `verify-${payload.token}`, removeOnComplete: 500, removeOnFail: 500, attempts: 3 });
