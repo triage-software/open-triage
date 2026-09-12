@@ -28,10 +28,10 @@ Conventions:
 - `POST /conversations/:id/messages` {body, send:true} → SMTP send + store (agent+) — **post-MVP** (worker increment; exists in the Next.js prototype layer, ports into the worker module)
 - `POST /conversations/:id/ai-draft` → AI-drafted reply (agent+; async job, returns jobId) — **post-MVP**
 
-## Mailboxes (admin of tenant) — **post-MVP module**
-- `GET/POST /mailboxes` · `PATCH/DELETE /mailboxes/:id`
-- `POST /mailboxes/:id/verify` → IMAP/SMTP connection test
-(No mailboxes controller ships in the MVP API; the Mailbox Prisma model exists. MVP inbox empty-state assumes the worker increment connects channels.)
+## Mailboxes (admin of tenant)
+- `GET/POST /mailboxes` · `PATCH/DELETE /mailboxes/:id` (delete → 400 `MAILBOX_IN_USE` while conversations reference the mailbox)
+- `POST /mailboxes/:id/verify` → IMAP/SMTP connection test (dry-run connect+auth; optional `{smtpHost?, smtpPort?, smtpSecure?}` body probes SMTP without persisting; failures → 400 `INVALID_CREDENTIALS` / `HOST_UNREACHABLE`)
+(Credentials are stored encrypted (`passwordEnc`, SESSION_SECRET-derived key) and never returned in any response.)
 
 ## Knowledge base (admin of tenant)
 - `GET/POST /knowledge-items` · `PATCH/DELETE /knowledge-items/:id`
