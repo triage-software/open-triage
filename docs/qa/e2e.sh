@@ -28,6 +28,20 @@ TS=$(date +%s)
 OWNER="owner-$TS@e2e.test"
 AGENT="agent-$TS@e2e.test"
 
+# Mail services (verify-mail profile) — probed once up front; when mailpit is
+# reachable the mail-flow scenarios run AND invite tokens are pulled from the
+# delivered mail. When it's down, everything mail-related is skipped/gracefully
+# degraded so the plain stack stays green.
+MAILPIT_UI="${MAILPIT_UI:-http://localhost:8025}"
+GREENMAIL_IMAP="${GREENMAIL_IMAP:-localhost:3143}"
+GREENMAIL_SMTP="${GREENMAIL_SMTP:-localhost:3025}"
+MAILPIT_API="$MAILPIT_UI/api/v1"
+MAIL_OK=1
+curl -s -o /dev/null --max-time 3 "$MAILPIT_UI" || MAIL_OK=0
+if [ "$MAIL_OK" != "1" ]; then
+  echo "== mail services not reachable — mail scenarios will be skipped =="
+fi
+
 echo "== 1. stack health =="
 check "$(code "$BASE/sign-in")" "200" "GET /sign-in"
 check "$(code "$BASE/accept-invite")" "200" "GET /accept-invite (no token)"
@@ -40,9 +54,25 @@ echo "$REPLY_BODY" | grep -q '"role":"owner"' && ok "GET /auth/me → owner" || 
 
 echo "== 3. QA-3: invite → accept-invite → login =="
 req POST /users "$J/owner.txt" "{\"email\":\"$AGENT\",\"role\":\"agent\",\"locale\":\"pl\"}"
-case "$REPLY_BODY" in *setupToken*) ok "invite response carries setupToken (MVP)";; *) bad "invite response: $REPLY_BODY";; esac
-TOKEN=$(echo "$REPLY_BODY" | sed -n 's/.*"setupToken":"\([^"]*\)".*/\1/p')
-[ -n "$TOKEN" ] || bad "no setup token parsed"
+TOKEN=""
+if [ "$MAIL_OK" = "1" ]; then
+  # SMTP configured: the invite mail carries the setup link; the response
+  # intentionally no longer contains setupToken. Pull the token from mailpit.
+  sleep 2
+  INVITE_MSG_ID=$(curl -s "$MAILPIT_API/messages?limit=20" 2>/dev/null | grep -B6 "\"Address\":\"$AGENT\"" | grep -oE '"ID":"[^"]*"' | head -1 | cut -d'"' -f4)
+  if [ -n "$INVITE_MSG_ID" ]; then
+    TOKEN=$(curl -s "$MAILPIT_API/message/$INVITE_MSG_ID" 2>/dev/null | grep -oE 'token=[A-Za-z0-9_-]+' | head -1 | cut -d= -f2)
+  fi
+  case "$REPLY_BODY" in
+    *setupToken*) bad "invite response leaked setupToken despite SMTP delivery";;
+    *) ok "invite response carries no setupToken (SMTP delivery on)";;
+  esac
+  [ -n "$TOKEN" ] && ok "invite token extracted from delivered mail" || bad "no invite mail with token found for $AGENT"
+else
+  case "$REPLY_BODY" in *setupToken*) ok "invite response carries setupToken (MVP fallback, no SMTP)";; *) bad "invite response: $REPLY_BODY";; esac
+  TOKEN=$(echo "$REPLY_BODY" | sed -n 's/.*"setupToken":"\([^"]*\)".*/\1/p')
+  [ -n "$TOKEN" ] || bad "no setup token parsed"
+fi
 req POST /auth/login "" "{\"email\":\"$AGENT\",\"password\":\"password-secure-1\"}"
 check "$REPLY_STATUS" "401" "invited user cannot login before setup"
 req POST /auth/accept-invite "" "{\"token\":\"$TOKEN\",\"password\":\"short\"}"
@@ -89,19 +119,10 @@ check "$(code "$BASE/definitely-not-a-route")" "404" "unknown route 404s"
 
 # ============================================================
 # == 8. mail flow (worker increment) — requires the verify-mail
-# profile services (mailpit + greenmail) reachable. When they are
-# not up, the whole mail block is skipped so the plain stack stays
-# green: MAILPIT_UI / GREENMAIL_IMAP envs point at the host ports.
+# profile services (mailpit + greenmail); MAIL_OK was probed at
+# the top. MAILPIT_UI / GREENMAIL_* envs point at the host ports.
 # ============================================================
-MAILPIT_UI="${MAILPIT_UI:-http://localhost:8025}"
-GREENMAIL_IMAP="${GREENMAIL_IMAP:-localhost:3143}"
-GREENMAIL_SMTP="${GREENMAIL_SMTP:-localhost:3025}"
-MAILPIT_API="$MAILPIT_UI/api/v1"
-MAIL_OK=1
-code "$MAILPIT_UI" >/dev/null 2>&1; MP=$?
-docker ps --format '{{.Names}}' 2>/dev/null | grep -q 'mailpit' || MP=1
-if [ "$MP" != "0" ]; then
-  MAIL_OK=0
+if [ "$MAIL_OK" != "1" ]; then
   echo "== 8. mail flow — SKIPPED (mailpit not reachable; run the verify-mail profile) =="
 fi
 
@@ -128,13 +149,13 @@ if [ "$MAIL_OK" = "1" ]; then
 
   # SMTP override for the send path (Mailbox.smtp* columns are worker-scope).
   # PATCH /mailboxes/:id does not accept smtp* yet (mailboxes card t_fbfb2225
-  # owns that schema) — set the override via prisma in the api container.
-  docker exec "$(docker ps --format '{{.Names}}' | grep 'api-1' | head -1)" node --input-type=commonjs -e "
-const {PrismaClient} = require('@prisma/client');
-const p = new PrismaClient();
-p.mailbox.update({where:{id:'$MAILBOX_ID'},data:{smtpHost:'greenmail',smtpPort:3025,smtpSecure:false}})
- .then(()=>{console.log('smtp override set');return p.\$disconnect()})
- .catch(e=>{console.error(e.message);process.exit(1)})" >/dev/null 2>&1 && ok "smtp override set" || bad "smtp override update failed"
+  # owns that schema) — set the override via the helper in the api container.
+  docker cp "$(dirname "$0")/set-smtp-override.cjs" "$(docker ps --format '{{.Names}}' | grep 'api-1' | head -1):/tmp/set-smtp-override.cjs" 2>/dev/null
+  SMTP_JSON=$(docker exec "$(docker ps --format '{{.Names}}' | grep 'api-1' | head -1)" node /tmp/set-smtp-override.cjs "$MAILBOX_ID" greenmail 3025 false 2>/dev/null)
+  case "$SMTP_JSON" in
+    *'"ok":true'*) ok "smtp override set";;
+    *) bad "smtp override update failed ($SMTP_JSON)";;
+  esac
 
   # Worker polls every WORKER_POLL_INTERVAL_MS (compose verify: 3s).
   CONV_FOUND=0

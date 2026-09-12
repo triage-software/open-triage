@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 /* Seeds a customer mail into the greenmail SMTP sink for e2e mail scenarios.
- * Usage: node docs/qa/seed-mail.mjs <smtp-host> <smtp-port> [subject] [body] [messageId]
+ * Usage: node seed-mail.cjs <smtp-host> <smtp-port> [subject]
  * The mail goes From: klient@klient.test To: verify@localhost so the worker's
- * IMAP poll imports it into a conversation. */
-const nodemailer = require('nodemailer');
+ * IMAP poll imports it into a conversation. When run OUTSIDE the repo (e.g.
+ * copied into a container /tmp), nodemailer resolves from /app/node_modules. */
+let nodemailer;
+try {
+  nodemailer = require('nodemailer');
+} catch {
+  nodemailer = require('/app/node_modules/nodemailer');
+}
 
 const [, , hostArg, portArg, subjectArg, bodyArg, messageIdArg] = process.argv;
 const host = hostArg || 'localhost';
