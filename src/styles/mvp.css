@@ -1,21 +1,19 @@
-/* open-triage MVP app styles — tokens per DESIGN-MVP.md (light theme; --brand-* resolved by globals) */
+/* open-triage MVP app styles — layout metrics only.
+   Colors are NOT defined here: every --ot-* color token comes from the shared
+   design-system layer (src/app/tokens.css), which is the single owner of the
+   --ot-* namespace. Layout-only variables live below. */
 :root {
   --ot-sidebar-w: 240px;
   --ot-list-w: 340px;
   --ot-topbar-h: 56px;
   --ot-radius-shell: 12px;
   --ot-radius-card: 8px;
-  --ot-status-new: #2f6fed;
-  --ot-status-in-progress: #b8860b;
-  --ot-status-waiting: #8c8c8c;
-  --ot-status-resolved: #2e7d4f;
+  /* status colors: DS ramp steps, AA with white chip text */
+  --ot-status-new: var(--ot-primary);
+  --ot-status-in-progress: var(--brand-presets-gold-9);
+  --ot-status-waiting: var(--ot-ink);
+  --ot-status-resolved: var(--brand-presets-green-8);
   --ot-row-h: 64px;
-  --ot-line: #e9eaf0;
-  --ot-ink: #292d3b;
-  --ot-muted: #6b6f7b;
-  --ot-bg: #f6f7f9;
-  --ot-container: #ffffff;
-  --ot-primary: #7666bd;
 }
 
 /* ---------- auth ---------- */
@@ -29,7 +27,7 @@
   flex-direction: column;
   justify-content: center;
   padding: 48px;
-  background: linear-gradient(135deg, var(--ot-primary), #4a3f8f);
+  background: linear-gradient(135deg, var(--ot-primary), var(--ot-accent-2));
   color: #fff;
 }
 .auth-brand strong { font-size: 28px; }
@@ -57,7 +55,7 @@ button:focus-visible, a:focus-visible {
   outline: 2px solid var(--ot-primary);
   outline-offset: 2px;
 }
-.auth-error { color: #b3261e; font-size: 13px; margin: 0; }
+.auth-error { color: var(--ot-danger); font-size: 13px; margin: 0; }
 .btn-primary {
   background: var(--ot-primary);
   color: #fff;
@@ -102,7 +100,7 @@ button:focus-visible, a:focus-visible {
   color: var(--ot-ink);
 }
 .workspace-sidebar {
-  background: #f0f1f4;
+  background: var(--ot-sunken);
   border-right: 1px solid var(--ot-line);
   display: flex;
   flex-direction: column;
@@ -145,7 +143,7 @@ button:focus-visible, a:focus-visible {
   gap: 6px;
 }
 .conv-row:hover { background: var(--ot-bg); }
-.conv-row.conv-selected { background: #efeafc; }
+.conv-row.conv-selected { background: var(--ot-accent-bg-soft); }
 .conv-row-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
 .conv-subject { font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .conv-row-bottom { display: flex; justify-content: space-between; font-size: 12px; color: var(--ot-muted); }
@@ -187,7 +185,7 @@ button:focus-visible, a:focus-visible {
 }
 .empty-state { padding: 40px 20px; text-align: center; color: var(--ot-muted); }
 .empty-state p { font-weight: 600; margin-bottom: 4px; }
-.state-error { padding: 20px; color: #b3261e; }
+.state-error { padding: 20px; color: var(--ot-danger); }
 .skeleton-row { padding: 16px; color: var(--ot-muted); }
 
 /* ---------- admin ---------- */

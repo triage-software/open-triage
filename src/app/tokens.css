@@ -127,4 +127,10 @@
   --ot-brand-symbol-fg: #8c6850;
   --ot-brand-dot: #c98d68;
   --ot-shadow-base: #453e37;      /* warm shadow base */
+
+  /* --- compat aliases (names consumed by styles/mvp.css) --- */
+  --ot-line: var(--ot-border-soft);
+  --ot-muted: var(--ot-ink-2);
+  --ot-bg: var(--ot-canvas);
+  --ot-container: var(--ot-surface);
 }
