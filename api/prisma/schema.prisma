@@ -1,0 +1,249 @@
+// open-triage MVP data model — SPEC-0001, ADR-0001 (shared schema, tenant_id column)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  owner
+  admin
+  agent
+}
+
+enum Plan {
+  free
+  pro
+  enterprise
+}
+
+enum ConversationStatus {
+  open
+  pending
+  resolved
+}
+
+enum Priority {
+  low
+  normal
+  high
+  urgent
+}
+
+enum Direction {
+  in
+  out
+}
+
+enum AuthorType {
+  customer
+  agent
+  ai
+}
+
+enum MailboxKind {
+  imap
+  channel
+}
+
+// ---- Platform (unscoped) ----
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  plan      Plan     @default(free)
+  suspended Boolean  @default(false)
+  locale    String   @default("en")
+  createdAt DateTime @default(now())
+
+  users       User[]
+  mailboxes   Mailbox[]
+  conversations Conversation[]
+  knowledgeItems KnowledgeItem[]
+  settings    TenantSetting?
+
+  @@index([slug])
+}
+
+model PlatformAdmin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  locale       String   @default("en")
+  createdAt    DateTime @default(now())
+  sessions     Session[]
+}
+
+// Global AI provider config (super-admin editable)
+model GlobalSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+// ---- Tenant-scoped (every query must carry tenantId) ----
+
+model User {
+  id           String    @id @default(uuid())
+  tenantId     String
+  email        String
+  passwordHash String
+  name         String?
+  role         Role      @default(agent)
+  locale       String    @default("en")
+  invited      Boolean   @default(false)
+  // email verification (ADR-0002)
+  emailVerified  Boolean   @default(false)
+  verifyToken    String?   @unique
+  createdAt    DateTime  @default(now())
+  deactivatedAt DateTime?
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id])
+  conversations Conversation[] @relation("assignee")
+  comments      Comment[]
+  sessions      Session[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId, role])
+  @@index([email])
+}
+
+model Session {
+  id        String   @id @default(uuid()) // opaque session id (cookie value)
+  userId    String?
+  adminId   String?  // platform admin sessions live in same table (ADR-0002)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user  User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin PlatformAdmin? @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([adminId])
+  @@index([expiresAt])
+}
+
+model TenantSetting {
+  tenantId String  @id
+  // per-tenant AI config (model id), global key lives in GlobalSetting
+  aiModel  String?
+  tenant   Tenant  @relation(fields: [tenantId], references: [id])
+}
+
+model Mailbox {
+  id          String      @id @default(uuid())
+  tenantId    String
+  kind        MailboxKind @default(imap)
+  name        String
+  host        String?
+  port        Int?
+  secure      Boolean     @default(true)
+  user        String?
+  // encrypted at rest (ADR/SPEC: credentials encrypted with SESSION_SECRET-derived key)
+  passwordEnc String?
+  sentFolder  String?
+  active      Boolean     @default(true)
+  lastSyncAt  DateTime?
+  createdAt   DateTime    @default(now())
+  // worker increment (t_87a44da4): IMAP poll cursor + optional SMTP override.
+  // smtp* null → SMTP config falls back to the IMAP host/port/secure above.
+  imapUidValidity String?
+  imapLastUid     Int?
+  smtpHost        String?
+  smtpPort        Int?
+  smtpSecure      Boolean?
+
+  tenant        Tenant        @relation(fields: [tenantId], references: [id])
+  conversations Conversation[]
+
+  @@index([tenantId])
+}
+
+model Conversation {
+  id            String             @id @default(uuid())
+  tenantId      String
+  mailboxId     String
+  subject       String
+  status        ConversationStatus @default(open)
+  priority      Priority           @default(normal)
+  category      String?
+  assigneeId    String?
+  customerEmail String
+  // threading (prototype logic, kept): Message-ID / References
+  messageIds    String[] @default([])
+  references    String[] @default([])
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  // worker increment (t_87a44da4): latest AI triage result + draft tracking.
+  aiCategory      String?
+  aiPriority      String?
+  aiReason        String?
+  aiDraftText     String?
+  aiDraftSourceIds String[] @default([])
+  aiDraftModel    String?
+  aiDraftAt       DateTime?
+
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  mailbox   Mailbox   @relation(fields: [mailboxId], references: [id])
+  assignee  User?     @relation("assignee", fields: [assigneeId], references: [id])
+  messages  Message[]
+  comments  Comment[]
+
+  @@index([tenantId, status, lastMessageAt])
+  @@index([tenantId, assigneeId])
+  @@index([tenantId, mailboxId])
+}
+
+model Message {
+  id             String     @id @default(uuid())
+  tenantId       String
+  conversationId String
+  direction      Direction
+  authorType     AuthorType
+  authorUserId   String?
+  authorName     String?
+  body           String
+  bodyHtml       String?
+  messageId      String?    // RFC Message-ID of outbound mail
+  inReplyTo      String?
+  sentAt         DateTime   @default(now())
+  // worker increment (t_87a44da4): delivery idempotency + Sent-folder state.
+  deliveryKey    String?   @unique
+  sentCopyFolder String?
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+
+  @@index([tenantId, conversationId, sentAt])
+}
+
+model Comment {
+  id             String   @id @default(uuid())
+  tenantId       String
+  conversationId String
+  userId         String
+  body           String
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  @@index([tenantId, conversationId, createdAt])
+}
+
+model KnowledgeItem {
+  id        String   @id @default(uuid())
+  tenantId  String
+  title     String
+  content   String
+  source    String   @default("manual")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+}

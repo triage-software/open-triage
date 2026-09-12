@@ -2,6 +2,29 @@
 import type { Priority, User } from "@/lib/types";
 import { SignalHigh, SignalMedium, SignalLow, ChevronsUp } from "lucide-react";
 
+/**
+ * Brand mark: three narrowing lines — the triage gesture (full queue sorted
+ * down to what matters). Drawn on the DS "clay" tile (--ot-brand-symbol-*).
+ */
+export function TriageMark({ size = 20 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.1}
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path d="M4 6h16" />
+      <path d="M7 12h10" />
+      <path d="M10 18h4" />
+    </svg>
+  );
+}
+
 export function Avatar({
   user,
   name,
@@ -26,7 +49,7 @@ export function Avatar({
       className={`avatar avatar-${size}`}
       style={
         {
-          "--avatar-color": user?.color ?? color ?? "#878c99",
+          "--avatar-color": user?.color ?? color ?? "#91887d",
         } as React.CSSProperties
       }
       title={user?.name ?? name}

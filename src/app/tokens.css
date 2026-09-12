@@ -1,0 +1,136 @@
+/* open-triage design tokens — vendored from triage-software/design-system
+   (system/variables.css, "Design System Inspired by Intercom": warm paper & oat).
+   Semantic aliases (--ot-*) are the ONLY names prototype CSS should consume;
+   --brand-* ramps are kept verbatim for alignment with the DS kit.
+   Source of truth: DESIGN.md / brand.json in the design-system repo.
+   Accessibility: --ot-primary (#6b6157) with #fff text = 5.6:1 (AA);
+   --ot-accent text on canvas = 5.9:1 (AA). */
+
+:root {
+  /* --- DS core (verbatim subset of variables.css :root) --- */
+  --brand-font-family: SaansMono, system-ui, -apple-system, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  --brand-font-family-code: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  --brand-font-size: 14px;
+  --brand-font-size-sm: 12px;
+  --brand-font-size-lg: 18px;
+  --brand-font-size-heading-1: 38px;
+  --brand-font-size-heading-2: 32px;
+  --brand-font-size-heading-3: 26px;
+  --brand-font-size-heading-4: 22px;
+  --brand-line-height: 1.5714285714285714;
+  --brand-line-height-heading: 1.25;
+  --brand-font-weight-strong: 600;
+  --brand-border-radius-sm: 5px;
+  --brand-border-radius: 8px;
+  --brand-border-radius-lg: 10px;
+  --brand-line-width: 1px;
+  --brand-control-height-sm: 24px;
+  --brand-control-height: 32px;
+  --brand-control-height-lg: 40px;
+  --brand-motion-duration-fast: 0.1s;
+  --brand-motion-duration-mid: 0.2s;
+  --brand-motion-ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
+  --brand-primary-palette-1: #fffcf0;
+  --brand-primary-palette-2: #fffbf0;
+  --brand-primary-palette-3: #fffbf0;
+  --brand-primary-palette-4: #f7f3e9;
+  --brand-primary-palette-5: #ebe6dd;
+  --brand-primary-palette-6: #dedbd6;
+  --brand-primary-palette-7: #b8b1a7;
+  --brand-primary-palette-8: #91887d;
+  --brand-primary-palette-9: #6b6157;
+  --brand-primary-palette-10: #453e37;
+  --brand-presets-red-1: #fff1f0;
+  --brand-presets-red-2: #ffcbc7;
+  --brand-presets-red-3: #ffa39e;
+  --brand-presets-red-4: #ff7775;
+  --brand-presets-red-5: #ff4d50;
+  --brand-presets-red-6: #f5222d;
+  --brand-presets-red-7: #cf1323;
+  --brand-presets-red-8: #a8071a;
+  --brand-presets-red-9: #820014;
+  --brand-presets-red-10: #5c0011;
+  --brand-presets-volcano-1: #fff2e8;
+  --brand-presets-volcano-2: #ffd8bf;
+  --brand-presets-volcano-3: #ffbb96;
+  --brand-presets-volcano-4: #ff9c6e;
+  --brand-presets-volcano-5: #ff7a45;
+  --brand-presets-volcano-6: #fa541c;
+  --brand-presets-volcano-7: #d4380d;
+  --brand-presets-volcano-8: #ad2202;
+  --brand-presets-volcano-9: #871500;
+  --brand-presets-volcano-10: #610c00;
+  --brand-presets-orange-1: #fff7e6;
+  --brand-presets-orange-2: #ffe7ba;
+  --brand-presets-orange-3: #ffd591;
+  --brand-presets-orange-4: #ffc069;
+  --brand-presets-orange-5: #ffa940;
+  --brand-presets-orange-6: #fa8c16;
+  --brand-presets-orange-7: #d46b08;
+  --brand-presets-orange-8: #ad4e00;
+  --brand-presets-orange-9: #873800;
+  --brand-presets-orange-10: #612500;
+  --brand-presets-gold-1: #fffbe6;
+  --brand-presets-gold-2: #fff1b8;
+  --brand-presets-gold-3: #ffe58f;
+  --brand-presets-gold-4: #ffd666;
+  --brand-presets-gold-5: #ffc53d;
+  --brand-presets-gold-6: #faad14;
+  --brand-presets-gold-7: #d48806;
+  --brand-presets-gold-8: #ad6800;
+  --brand-presets-gold-9: #874c00;
+  --brand-presets-gold-10: #613400;
+  --brand-presets-green-1: #f6ffed;
+  --brand-presets-green-2: #d9f7be;
+  --brand-presets-green-3: #b6eb8f;
+  --brand-presets-green-4: #94de64;
+  --brand-presets-green-5: #72d13d;
+  --brand-presets-green-6: #52c41a;
+  --brand-presets-green-7: #389e0d;
+  --brand-presets-green-8: #227804;
+  --brand-presets-green-9: #135200;
+  --brand-presets-green-10: #092b00;
+  --ot-neutral-1: #faf9f6;
+  --ot-neutral-2: #f5f4f1;
+  --ot-neutral-3: #f1f0ed;
+  --ot-neutral-4: #ecebe8;
+  --ot-neutral-5: #d7d6d4;
+  --ot-neutral-6: #c0bfbd;
+  --ot-neutral-7: #91918f;
+  --ot-neutral-8: #636261;
+  --ot-neutral-9: #2d2d2c;
+  --ot-neutral-10: #111111;
+
+  /* --- semantic layer (consumed by globals.css) --- */
+  --ot-canvas: #faf9f6;           /* page canvas (DS background) */
+  --ot-surface: #ffffff;          /* cards, panels, lists */
+  --ot-sunken: #f1f0ed;           /* sidebar, toolbars, footers (DS surface) */
+  --ot-border: #d7d6d4;           /* rules, card borders (DS border) */
+  --ot-border-soft: #ecebe8;      /* subtle dividers */
+  --ot-ink: #2d2d2c;              /* body text (DS text) */
+  --ot-ink-strong: #111111;       /* page headings (DS foreground) */
+  --ot-ink-2: #636261;            /* secondary text */
+  --ot-ink-3: #91918f;            /* tertiary / metadata (DS muted) */
+  --ot-ink-4: #c0bfbd;            /* quaternary / disabled */
+  --ot-accent: #6b6157;           /* accent text/icons (oat-9) */
+  --ot-accent-soft: #b8b1a7;      /* accent dots/bars/borders (oat-7) */
+  --ot-accent-bg: #ebe6dd;        /* accent chips/fills (oat-5) */
+  --ot-accent-2: #91887d;         /* stronger accent border/icon (oat-8) */
+  --ot-accent-bg-soft: #f7f3e9;   /* soft accent panels (oat-4) */
+  --ot-primary: #6b6157;          /* primary button bg (5.6:1 with #fff) */
+  --ot-primary-hover: #453e37;
+  --ot-focus: #91887d;            /* focus ring (oat-8) */
+  --ot-danger: #d4380d;           /* destructive (volcano-7) */
+  --ot-internal: #874c00;         /* internal-note identity (gold-9) */
+  --ot-internal-hover: #613400;
+  --ot-brand-symbol-bg: #ead4c4;  /* logo tile */
+  --ot-brand-symbol-fg: #8c6850;
+  --ot-brand-dot: #c98d68;
+  --ot-shadow-base: #453e37;      /* warm shadow base */
+
+  /* --- compat aliases (names consumed by styles/mvp.css) --- */
+  --ot-line: var(--ot-border-soft);
+  --ot-muted: var(--ot-ink-2);
+  --ot-bg: var(--ot-canvas);
+  --ot-container: var(--ot-surface);
+}

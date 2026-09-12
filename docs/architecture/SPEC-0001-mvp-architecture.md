@@ -25,8 +25,8 @@ The prototype is a single Next.js app with local-file persistence (`src/lib/stor
 | `api` | Nest.js 11, Prisma, PostgreSQL | Domain services, REST API, tenancy enforcement, role checks |
 | `db` | PostgreSQL 16 | Single physical DB, tenant-scoped rows (ADR-0001) |
 | `vikingdb` | OpenViking endpoint | AI knowledge base: embeddings, semantic retrieval for drafting/classification |
-| `worker` | Nest.js workers (BullMQ + Redis) | IMAP polling, SMTP send, AI classification jobs |
-| `redis` | Redis 7 | Job queue for worker |
+| `worker` | Nest.js workers (BullMQ + Redis) | IMAP polling, SMTP send, AI classification jobs — **planned next increment; not in the shipped MVP compose** (mail/AI slice ports from the prototype layer, DR-2/DR-3) |
+| `redis` | Redis 7 | Job queue for worker — shipped as dependency; **worker consumer lands next increment** |
 
 ## Multi-tenancy
 See ADR-0001. Shared schema, `tenant_id` column on every tenant-owned table, enforced at two layers: Prisma middleware injects the tenant filter from the request context, and every service query goes through tenant-scoped repositories. No schema-per-tenant in MVP.
