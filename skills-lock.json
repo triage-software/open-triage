@@ -1,0 +1,251 @@
+{
+  "version": 1,
+  "skills": {
+    "ot-apply-upgrade-notes": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-apply-upgrade-notes/SKILL.md",
+      "computedHash": "9bf90587d057df0bfe091aca6c99c85d46cd5faf63c801d1c7fa4117d23201a3"
+    },
+    "ot-approve-merge-pr": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-approve-merge-pr/SKILL.md",
+      "computedHash": "7d1dead32b4eb9e6236bc7e11bf11147e6fb30a8aad2d3dd1f294ac82979ae6c"
+    },
+    "ot-auto-continue-pr": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-auto-continue-pr/SKILL.md",
+      "computedHash": "a58f6143c92e4c8c0c5abc0dab2e029e78fcd48f7174533e17c035f2a725d022"
+    },
+    "ot-auto-continue-pr-loop": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-auto-continue-pr-loop/SKILL.md",
+      "computedHash": "3a4f24e07971a3d7243e83549bcf8a5a73f5ae59906381002c7656ac1f326da5"
+    },
+    "ot-auto-create-pr": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-auto-create-pr/SKILL.md",
+      "computedHash": "910bfc7c53adec73aa53fd4e4dcfc2b4e965182127d159cece69c1424e5f20a5"
+    },
+    "ot-auto-create-pr-loop": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-auto-create-pr-loop/SKILL.md",
+      "computedHash": "7090ec54cd3a01413102851081beb53b612fbbb7de7b4c1c39996e0efea43fbf"
+    },
+    "ot-auto-fix-issue": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-auto-fix-issue/SKILL.md",
+      "computedHash": "8dc87044a48d0d0ab0de4707487e17f8d8a2605644dacf4ad9f84505966bc9a3"
+    },
+    "ot-auto-fix-pr": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-auto-fix-pr/SKILL.md",
+      "computedHash": "748708e4ec9ad4e2ebddf089773ca7c2c713c3c49bba913cd2471744af0d91b3"
+    },
+    "ot-auto-implement-spec": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-auto-implement-spec/SKILL.md",
+      "computedHash": "d28af037b92b008dc9395418af4f4c2f3572284268d746acc43f93e874867156"
+    },
+    "ot-auto-manage-issues": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-auto-manage-issues/SKILL.md",
+      "computedHash": "3b51ab0eb9e07a1e0ec83442a02bf094d861b3a5ff108d60ad6db4778c7918eb"
+    },
+    "ot-auto-qa-pr": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-auto-qa-pr/SKILL.md",
+      "computedHash": "bd1479feebf6b2f2e93d520082fdde72021177ef6fe01d23a80485cd51709a1a"
+    },
+    "ot-auto-review-pr": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-auto-review-pr/SKILL.md",
+      "computedHash": "d805559982b2aa57c110d7f4e2fb16d816e8a70a2a88943875569777c11db0ba"
+    },
+    "ot-auto-update-changelog": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-auto-update-changelog/SKILL.md",
+      "computedHash": "ab9b6cacaf70d8f64155a9744ed7a7c2005d095955cf65140285c9e0dcc107b4"
+    },
+    "ot-auto-write-spec": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-auto-write-spec/SKILL.md",
+      "computedHash": "e15919d1501354a09ccfe7c43e864593c2887324f73b0ddd45ce4cd745026773"
+    },
+    "ot-brainstorm": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-brainstorm/SKILL.md",
+      "computedHash": "68a86e07a28d53a9d1b3669c9f1f1c548d80355af02905966533c78eb88b443e"
+    },
+    "ot-check-and-commit": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-check-and-commit/SKILL.md",
+      "computedHash": "03baa7856e595db2c068fb1f86301dd8690b5b259c5e48226003d404fdd51d35"
+    },
+    "ot-close-fixed-issues": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-close-fixed-issues/SKILL.md",
+      "computedHash": "bbf87a307e5f4032d6726f67ad0272303ebcfc7f2d7f26ef62af26c233059856"
+    },
+    "ot-code-review": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-code-review/SKILL.md",
+      "computedHash": "3840c45df63d9e1399afb28cff59436e936c4a43670b72fdecb4022fabffc41a"
+    },
+    "ot-competitor-site-teardown": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-competitor-site-teardown/SKILL.md",
+      "computedHash": "126ff3f2233423aaa8e17a6b865597a8ff1a665ab15dd0e53133ff3d5cb12c8f"
+    },
+    "ot-create-skill": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-create-skill/SKILL.md",
+      "computedHash": "6575bd6b87f441e78730123358da09166f7812d627369b0b69ef07ce4890f472"
+    },
+    "ot-discover": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-discover/SKILL.md",
+      "computedHash": "6d329a661eda21e62e03b3fad0abe6ae678db85b09817ac2a8eac02a83dd78c6"
+    },
+    "ot-fix": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-fix/SKILL.md",
+      "computedHash": "4826d15533223f5699720ad2d83c07c463c15aca1a4d15cc19196ae55d54524d"
+    },
+    "ot-followup-issue-from-pr": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-followup-issue-from-pr/SKILL.md",
+      "computedHash": "2a10388febace457966ce7524fcab77d63ba39c32601946d42c82552c09eedd9"
+    },
+    "ot-geo-i18n-strategy": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-geo-i18n-strategy/SKILL.md",
+      "computedHash": "9d92af20c908d4f0c50e20d7de612eb932a7e8c357f51466838789361e18c48e"
+    },
+    "ot-integration-tests": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-integration-tests/SKILL.md",
+      "computedHash": "da3c6ef62ec61779e7a3ed780ecd9e5e9986d04199d3be3bffd155765b9a72aa"
+    },
+    "ot-merge-buddy": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-merge-buddy/SKILL.md",
+      "computedHash": "dc56651fb8475157a0d390d4213e4af62fc77a83734b4846613114732d665a8f"
+    },
+    "ot-open-pr": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-open-pr/SKILL.md",
+      "computedHash": "cdd11f0a6979e19efcf5a85d6cb1e02e1da68b4cb4061b3438aa30387c0a9b39"
+    },
+    "ot-pipeline-retro": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-pipeline-retro/SKILL.md",
+      "computedHash": "c64b5b866e8caa683845a6863cba94568fbc6b5f8070ae04fd1391067d0882bc"
+    },
+    "ot-pr-autopilot": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-pr-autopilot/SKILL.md",
+      "computedHash": "f24b681bdda83430e7cb4893ec50e1a315bf3077b56d63ab521a749accb241fc"
+    },
+    "ot-prepare-issue": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-prepare-issue/SKILL.md",
+      "computedHash": "e3f5c28e2c600d316e437baef69e9c7c697e6e4d07490a9c759d737fa3914b40"
+    },
+    "ot-prepare-test-env": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-prepare-test-env/SKILL.md",
+      "computedHash": "c4194656da4d7914dd2e1710021e4d8e333137c8abae0c6eaffec0ec480e2a1b"
+    },
+    "ot-rebrand-ui": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-rebrand-ui/SKILL.md",
+      "computedHash": "03800cadfcad79740d895e6ddddf37bc65b47bb20ce02d75c31ab0d19ed2482d"
+    },
+    "ot-review-prs": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-review-prs/SKILL.md",
+      "computedHash": "dbc100a6b64f7f5d1aebd2549f29454d97ccf785694b991f57ab6be0fc854209"
+    },
+    "ot-root-cause": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-root-cause/SKILL.md",
+      "computedHash": "8868e54118f431517775cf0fbe501144740aac28eaa998bb99a0abe2413081fd"
+    },
+    "ot-setup-agent-pipeline": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-setup-agent-pipeline/SKILL.md",
+      "computedHash": "d790144717410a2eb2d54878e62580bfcdb98bb907c97fd34fc7211fb95cdf78"
+    },
+    "ot-spec-writing": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-spec-writing/SKILL.md",
+      "computedHash": "86cc5ef4b1e85fe10640a95ea6bf14eb9f9aef3395d1b127f88690fa997f9948"
+    },
+    "ot-ux-review-pr": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-ux-review-pr/SKILL.md",
+      "computedHash": "35e46a4d6582ddcdf1202d35e13885ca80f87bf9ed375c2da2b92f3c9bb48248"
+    },
+    "ot-ux-setup": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-ux-setup/SKILL.md",
+      "computedHash": "b79336dfeee1f42ddb2bdfa14c85e80caee862167308a8aebf60a8934d4f664c"
+    },
+    "ot-ux-shape": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-ux-shape/SKILL.md",
+      "computedHash": "8c299c67cd230081659984b4cd0cf2320ed8ded5a365932d20d7af079bf81f4d"
+    },
+    "ot-verify-in-repo": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-verify-in-repo/SKILL.md",
+      "computedHash": "c745c5e9bb278f2f3fa8e11d99be2c6018ea272dc1174ab6857c24a0195e6ef2"
+    },
+    "ot-website-deploy": {
+      "source": "triage-software/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ot-website-deploy/SKILL.md",
+      "computedHash": "68517c4afdda7d1c9d5ed7e645dc8d5fa20bbb28fe0751bb9f44e8cfb89a00e2"
+    }
+  }
+}
