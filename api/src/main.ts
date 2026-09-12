@@ -2,12 +2,16 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
+import { ZodExceptionFilter } from './common/zod-exception.filter';
 import type { Request, Response, NextFunction } from 'express';
 
 const PORT = parseInt(process.env.API_PORT ?? '4000', 10);
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // QA-2: Zod schema failures are client errors (400), not 500s.
+  app.useGlobalFilters(new ZodExceptionFilter());
 
   // cookie parsing (lightweight; avoids cookie-parser dep)
   app.use((req: Request, res: Response, next: NextFunction) => {

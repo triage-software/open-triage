@@ -42,6 +42,13 @@ export class AuthController {
     return this.auth.verify(String(body?.token ?? ''));
   }
 
+  /** QA-3: invited teammates set their password with the one-time setup token. */
+  @Post('accept-invite')
+  @HttpCode(200)
+  async acceptInvite(@Body() body: unknown, @Res({ passthrough: true }) res: Response) {
+    return this.auth.acceptInvite(body, res);
+  }
+
   @Get('me')
   @UseGuards(SessionGuard)
   async me(@Req() req: Request) {

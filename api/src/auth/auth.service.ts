@@ -16,6 +16,12 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+export const acceptInviteSchema = z.object({
+  token: z.string().min(10).max(200),
+  password: z.string().min(10).max(200),
+  name: z.string().max(120).optional(),
+});
+
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
 
 @Injectable()
@@ -120,6 +126,39 @@ export class AuthService {
       data: { emailVerified: true, verifyToken: null },
     });
     return { ok: true };
+  }
+
+  /** POST /auth/accept-invite {token, password, name?} — QA-3: completes a
+   *  teammate invite by setting the real password (one-time setup token was
+   *  stored in verifyToken at invite time). Activates + verifies the account,
+   *  then signs the user in. */
+  async acceptInvite(input: unknown, res: { cookie: (n: string, v: string, o: object) => void }) {
+    const data = acceptInviteSchema.parse(input);
+
+    const user = await this.prisma.user.findUnique({
+      where: { verifyToken: data.token },
+      include: { tenant: true },
+    });
+    if (!user || !user.invited) throw new BadRequestException({ code: 'INVALID_TOKEN' });
+    if (user.deactivatedAt) throw new UnauthorizedException({ code: 'ACCOUNT_DEACTIVATED' });
+    if (user.tenant.suspended) throw new UnauthorizedException({ code: 'TENANT_SUSPENDED' });
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: await argon2.hash(data.password, { type: argon2.argon2id }),
+        name: data.name ?? user.name,
+        invited: false,
+        emailVerified: true,
+        verifyToken: null,
+      },
+    });
+
+    await this.createSessionForUser(user.id, res);
+    return {
+      user: { id: user.id, email: user.email, role: user.role, locale: user.locale },
+      tenant: { id: user.tenantId },
+    };
   }
 
   private async createSessionForUser(

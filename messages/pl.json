@@ -15,6 +15,11 @@
     "invalidCredentials": "Nieprawidłowy e-mail lub hasło",
     "emailTaken": "Ten e-mail jest już zarejestrowany",
     "passwordTooShort": "Hasło musi mieć co najmniej 10 znaków",
+    "acceptInviteTitle": "Dołącz do zespołu",
+    "name": "Twoje imię",
+    "submitAcceptInvite": "Dołącz do miejsca pracy",
+    "invalidInviteToken": "Ten link zapraszający jest nieprawidłowy lub został już użyty",
+    "tenantSuspended": "To miejsce pracy jest zawieszone",
     "genericError": "Coś poszło nie tak. Spróbuj ponownie."
   },
   "nav": {

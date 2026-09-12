@@ -60,6 +60,32 @@ export async function logoutAction() {
   redirect('/sign-in');
 }
 
+/** QA-3: invited teammate completes signup (one-time setup token + password). */
+export async function acceptInviteAction(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const token = String(formData.get('token') ?? '');
+  const password = String(formData.get('password') ?? '');
+  const name = String(formData.get('name') ?? '').trim();
+  const locale = String(formData.get('locale') ?? 'en');
+
+  if (password.length < 10) return { error: 'passwordTooShort' };
+
+  const jar = await cookies();
+  const { status, body } = await apiFetch('/v1/auth/accept-invite', {
+    method: 'POST',
+    body: JSON.stringify({ token, password, ...(name ? { name } : {}) }),
+  });
+
+  if (status !== 200) {
+    const code = errorOf(body);
+    if (code === 'INVALID_TOKEN') return { error: 'invalidInviteToken' };
+    if (code === 'TENANT_SUSPENDED') return { error: 'tenantSuspended' };
+    return { error: 'genericError' };
+  }
+
+  jar.set('ot_locale', locale, { httpOnly: false, sameSite: 'lax', path: '/' });
+  redirect('/');
+}
+
 export async function setLocaleAction(locale: string) {
   const jar = await cookies();
   if (locale === 'en' || locale === 'pl') {
