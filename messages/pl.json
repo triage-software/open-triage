@@ -1,0 +1,76 @@
+{
+  "auth": {
+    "signIn": "Zaloguj się",
+    "signUp": "Załóż konto",
+    "email": "E-mail",
+    "password": "Hasło",
+    "tenantName": "Nazwa firmy",
+    "passwordHint": "Co najmniej 10 znaków",
+    "signInTitle": "Zaloguj się do open-triage",
+    "signUpTitle": "Utwórz swoje miejsce pracy",
+    "noAccount": "Nie masz jeszcze konta?",
+    "haveAccount": "Masz już konto?",
+    "submitSignIn": "Zaloguj się",
+    "submitSignUp": "Utwórz miejsce pracy",
+    "invalidCredentials": "Nieprawidłowy e-mail lub hasło",
+    "emailTaken": "Ten e-mail jest już zarejestrowany",
+    "passwordTooShort": "Hasło musi mieć co najmniej 10 znaków",
+    "genericError": "Coś poszło nie tak. Spróbuj ponownie."
+  },
+  "nav": {
+    "inbox": "Skrzynka",
+    "knowledge": "Baza wiedzy",
+    "team": "Zespół",
+    "settings": "Ustawienia",
+    "logout": "Wyloguj się"
+  },
+  "inbox": {
+    "title": "Skrzynka",
+    "empty": "Nie ma jeszcze rozmów",
+    "emptyCta": "Podłącz kanał, aby otrzymywać wiadomości od klientów",
+    "searchPlaceholder": "Szukaj rozmów…",
+    "statusOpen": "Otwarta",
+    "statusPending": "Oczekuje",
+    "statusResolved": "Zakończona",
+    "priorityLow": "Niski",
+    "priorityNormal": "Normalny",
+    "priorityHigh": "Wysoki",
+    "priorityUrgent": "Pilny",
+    "assignTo": "Przypisz do",
+    "unassigned": "Nieprzypisana",
+    "reply": "Odpowiedz",
+    "internalNote": "Notatka wewnętrzna",
+    "send": "Wyślij",
+    "noteSaved": "Notatka dodana"
+  },
+  "admin": {
+    "title": "Administracja platformy",
+    "tenants": "Klienci (tenanci)",
+    "users": "Użytkownicy",
+    "settings": "Ustawienia globalne",
+    "searchPlaceholder": "Szukaj tenantów…",
+    "plan": "Plan",
+    "status": "Status",
+    "active": "Aktywny",
+    "suspended": "Zawieszony",
+    "created": "Utworzony",
+    "conversations": "Rozmowy",
+    "members": "Członkowie",
+    "suspend": "Zawieś",
+    "activate": "Aktywuj",
+    "aiModel": "Model AI",
+    "aiEnabled": "Funkcje AI włączone",
+    "save": "Zapisz",
+    "saved": "Zapisano"
+  },
+  "states": {
+    "loading": "Wczytywanie…",
+    "error": "Coś poszło nie tak",
+    "retry": "Ponów",
+    "empty": "Tu jeszcze nic nie ma"
+  },
+  "lang": {
+    "en": "English",
+    "pl": "Polski"
+  }
+}
