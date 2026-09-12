@@ -15,6 +15,11 @@
     "invalidCredentials": "Invalid e-mail or password",
     "emailTaken": "This e-mail is already registered",
     "passwordTooShort": "Password must be at least 10 characters",
+    "acceptInviteTitle": "Join your team",
+    "name": "Your name",
+    "submitAcceptInvite": "Join workspace",
+    "invalidInviteToken": "This invite link is invalid or was already used",
+    "tenantSuspended": "This workspace is suspended",
     "genericError": "Something went wrong. Try again."
   },
   "nav": {

@@ -113,11 +113,15 @@ export class TenantRoleGuard implements CanActivate {
   }
 }
 
-/** Decorator helper to set required role on a handler/class. */
+/** Decorator helper to set required role on a handler/class.
+ *  QA-1: the role must land on the handler *function* — TenantRoleGuard
+ *  reads `ctx.getHandler().minRole`. Method decorators receive the property
+ *  descriptor, so we set it on `descriptor.value` (the actual handler the
+ *  guard sees) and on the class prototype for class-level usage. */
 export function MinRole(role: 'agent' | 'admin' | 'owner'): MethodDecorator & ClassDecorator {
   return ((target: object, _key?: unknown, descriptor?: unknown) => {
-    if (descriptor && typeof descriptor === 'object') {
-      (descriptor as { minRole?: string }).minRole = role;
+    if (descriptor && typeof descriptor === 'object' && typeof (descriptor as { value?: unknown }).value === 'function') {
+      (descriptor as { value: { minRole?: string } }).value.minRole = role;
     } else {
       (target as { minRole?: string }).minRole = role;
     }

@@ -68,7 +68,10 @@ export class UsersController {
       select: { id: true, email: true, role: true, locale: true, createdAt: true },
     });
     console.info(`[users] invite setup token for ${data.email}: ${setupToken}`);
-    return { data: user };
+    // MVP (no SMTP worker yet): the token is returned to the inviting admin so
+    // the invitee can complete signup at /accept-invite. Remove when the
+    // worker delivers invite e-mails (see API-CONTRACT-OUTLINE).
+    return { data: { ...user, setupToken } };
   }
 
   @Patch(':id')

@@ -8,7 +8,7 @@ Local/self-host topology (repo root `docker-compose.yml` to be implemented with 
 |---|---|---|---|
 | `web` | build `./` (Next.js) | 3000 | UI + BFF; talks to `api` over internal network |
 | `api` | build `./api` (Nest.js) | 4000 (internal; expose only for dev) | REST `/v1`, Prisma, guards |
-| `worker` | build `./api` (same image, `worker` entrypoint) | — | BullMQ consumer: IMAP poll, SMTP send, AI classify/draft |
+| `worker` | build `./api` (same image, `worker` entrypoint) — **planned next increment, not in shipped compose (DR-3)** | BullMQ consumer: IMAP poll, SMTP send, AI classify/draft |
 | `db` | `postgres:16-alpine` | 5432 (dev only) | single volume `pgdata`; migrations via `api` on start |
 | `redis` | `redis:7-alpine` | — | job queue backend |
 | `vikingdb` | OpenViking endpoint image or external URL | 1933 | per ADR-0003; `VIKINGDB_URL` env |
