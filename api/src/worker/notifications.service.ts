@@ -1,5 +1,5 @@
+import { Injectable, Logger } from '@nestjs/common';
 import nodemailer from 'nodemailer';
-import { Logger } from '@nestjs/common';
 import { systemMailHtml } from './mail-composer';
 import type { InviteMailPayload, VerifyMailPayload } from './producer';
 
@@ -46,6 +46,7 @@ function t(locale: string, key: string, vars?: Record<string, string>): string {
  * keep the MVP fallbacks — the invite response keeps setupToken when SMTP is
  * not configured).
  */
+@Injectable()
 export class NotificationService {
   private readonly logger = new Logger(NotificationService.name);
 

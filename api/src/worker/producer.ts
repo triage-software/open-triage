@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import type { Queue } from 'bullmq';
 import { QUEUES, JOBS, createConnection, createQueue } from './queues';
 import type { Redis } from 'ioredis';
@@ -8,6 +9,7 @@ import type { Redis } from 'ioredis';
  * to the documented MVP behavior (invite setupToken in the response, verify
  * token in server logs, synchronous AI draft).
  */
+@Injectable()
 export class Producer {
   private readonly connection: Redis | null;
   private readonly mailSync: Queue | null;
