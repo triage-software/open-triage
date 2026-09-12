@@ -58,7 +58,9 @@ export class NotificationService {
     const user = process.env.SMTP_SYSTEM_USER ?? process.env.SMTP_USER ?? '';
     const pass = process.env.SMTP_SYSTEM_PASSWORD ?? process.env.SMTP_PASSWORD ?? '';
     const from = process.env.SMTP_SYSTEM_FROM ?? process.env.SMTP_FROM;
-    if (!pass || !from) return null;
+    // SMTP_SYSTEM_PASSWORD may legitimately be empty (local sinks like mailpit
+    // accept unauthenticated relays) — only FROM is mandatory.
+    if (!from) return null;
     return {
       host,
       port: Number(process.env.SMTP_SYSTEM_PORT ?? process.env.SMTP_PORT ?? 587),

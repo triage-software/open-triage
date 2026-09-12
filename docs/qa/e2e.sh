@@ -126,6 +126,16 @@ if [ "$MAIL_OK" = "1" ]; then
   req POST "/mailboxes/$MAILBOX_ID/verify" "$J/owner.txt" '{}'
   check "$REPLY_STATUS" "200" "POST /mailboxes/:id/verify (IMAP reachable)"
 
+  # SMTP override for the send path (Mailbox.smtp* columns are worker-scope).
+  # PATCH /mailboxes/:id does not accept smtp* yet (mailboxes card t_fbfb2225
+  # owns that schema) — set the override via prisma in the api container.
+  docker exec "$(docker ps --format '{{.Names}}' | grep 'api-1' | head -1)" node --input-type=commonjs -e "
+const {PrismaClient} = require('@prisma/client');
+const p = new PrismaClient();
+p.mailbox.update({where:{id:'$MAILBOX_ID'},data:{smtpHost:'greenmail',smtpPort:3025,smtpSecure:false}})
+ .then(()=>{console.log('smtp override set');return p.\$disconnect()})
+ .catch(e=>{console.error(e.message);process.exit(1)})" >/dev/null 2>&1 && ok "smtp override set" || bad "smtp override update failed"
+
   # Worker polls every WORKER_POLL_INTERVAL_MS (compose verify: 3s).
   CONV_FOUND=0
   for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
@@ -185,9 +195,9 @@ if [ "$MAIL_OK" = "1" ]; then
   fi
 
   echo "== 11. mail flow: RBAC on the new endpoints =="
-  req POST "/conversations/nonexistent-id-000/messages" "$J/owner.txt" '{"body":"x","send":true}'
+  req POST "/conversations/00000000-0000-4000-8000-000000000000/messages" "$J/owner.txt" '{"body":"x","send":true}'
   check "$REPLY_STATUS" "404" "messages on missing conversation → 404"
-  req POST "/conversations/nonexistent-id-000/ai-draft" "$J/owner.txt" '{}'
+  req POST "/conversations/00000000-0000-4000-8000-000000000000/ai-draft" "$J/owner.txt" '{}'
   check "$REPLY_STATUS" "404" "ai-draft on missing conversation → 404"
 fi
 

@@ -58,12 +58,16 @@ export function mailboxConfig(mailbox: MailboxLike, sessionSecret: string): Mail
     pass,
     sentFolder: mailbox.sentFolder,
   };
-  // SMTP falls back to the IMAP host/port/secure when no override is set.
-  const smtp: SmtpConfig | null = (mailbox.smtpHost || mailbox.host)
+  // SMTP override columns (smtpHost/smtpPort/smtpSecure) drive the send path.
+  // Without an explicit override there is NO SMTP fallback to the IMAP host:
+  // IMAP and SMTP almost never share a port, and speaking SMTP at an IMAP
+  // listener dies on the greeting ("* OK IMAP4rev1 ..."). The send job then
+  // fails with 'SMTP not configured for this mailbox' instead of misdialing.
+  const smtp: SmtpConfig | null = mailbox.smtpHost
     ? {
-        host: mailbox.smtpHost ?? mailbox.host,
-        port: mailbox.smtpPort ?? (mailbox.smtpHost ? 465 : mailbox.port ?? 465),
-        secure: mailbox.smtpSecure ?? (mailbox.smtpHost ? true : mailbox.secure),
+        host: mailbox.smtpHost,
+        port: mailbox.smtpPort ?? 465,
+        secure: mailbox.smtpSecure ?? true,
         user: mailbox.user,
         pass,
       }
