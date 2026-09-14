@@ -92,3 +92,39 @@ export async function setLocaleAction(locale: string) {
     jar.set('ot_locale', locale, { httpOnly: false, sameSite: 'lax', path: '/' });
   }
 }
+
+export type VerifyState = { error?: string; verified?: boolean };
+
+/** POST /v1/auth/verify {token} — no redirect on success, the page shows a
+ *  confirmation + link instead. */
+export async function verifyAction(_prev: VerifyState, formData: FormData): Promise<VerifyState> {
+  const token = String(formData.get('token') ?? '');
+
+  const { status, body } = await apiFetch('/v1/auth/verify', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  });
+
+  if (status !== 200) {
+    const code = errorOf(body);
+    return { error: code === 'INVALID_TOKEN' ? 'invalidVerifyToken' : 'genericError' };
+  }
+  return { verified: true };
+}
+
+export type ResendState = { ok: boolean; alreadyVerified?: boolean; error?: string };
+
+/** POST /v1/auth/resend-verification — session-cookie-authenticated, only
+ *  meaningful for a signed-in user; a non-200 (e.g. unauthenticated) surfaces
+ *  a generic error. */
+export async function resendVerificationAction(): Promise<ResendState> {
+  const jar = await cookies();
+  const { status, body } = await apiFetch('/v1/auth/resend-verification', {
+    method: 'POST',
+    cookies: Object.fromEntries(jar.getAll().map((c) => [c.name, c.value])),
+  });
+
+  if (status !== 200) return { ok: false, error: 'genericError' };
+  const alreadyVerified = (body as { alreadyVerified?: boolean } | null)?.alreadyVerified;
+  return { ok: true, alreadyVerified };
+}

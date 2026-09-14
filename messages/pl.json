@@ -20,7 +20,19 @@
     "submitAcceptInvite": "Dołącz do miejsca pracy",
     "invalidInviteToken": "Ten link zapraszający jest nieprawidłowy lub został już użyty",
     "tenantSuspended": "To miejsce pracy jest zawieszone",
-    "genericError": "Coś poszło nie tak. Spróbuj ponownie."
+    "genericError": "Coś poszło nie tak. Spróbuj ponownie.",
+    "verifyTitle": "Zweryfikuj swój e-mail",
+    "verifying": "Weryfikowanie e-maila…",
+    "verifySuccess": "Twój e-mail został zweryfikowany.",
+    "verifySuccessCta": "Przejdź do open-triage",
+    "verifyMissingToken": "Brak linku weryfikacyjnego.",
+    "invalidVerifyToken": "Ten link weryfikacyjny jest nieprawidłowy lub wygasł.",
+    "resend": "Wyślij ponownie e-mail weryfikacyjny",
+    "resendSent": "Wysłano!",
+    "resending": "Wysyłanie…",
+    "bannerUnverified": "Zweryfikuj swój adres e-mail.",
+    "bannerResend": "Wyślij ponownie",
+    "bannerResendSent": "Wysłano!"
   },
   "nav": {
     "inbox": "Skrzynka",

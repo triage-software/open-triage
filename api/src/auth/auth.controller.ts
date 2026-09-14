@@ -49,6 +49,14 @@ export class AuthController {
     return this.auth.acceptInvite(body, res);
   }
 
+  /** POST /auth/resend-verification — issues a fresh verify token for the current user. */
+  @Post('resend-verification')
+  @HttpCode(200)
+  @UseGuards(SessionGuard)
+  async resendVerification(@Req() req: Request) {
+    return this.auth.resendVerification(req.user!.userId);
+  }
+
   @Get('me')
   @UseGuards(SessionGuard)
   async me(@Req() req: Request) {

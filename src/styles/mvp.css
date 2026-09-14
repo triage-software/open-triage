@@ -56,6 +56,8 @@ button:focus-visible, a:focus-visible {
   outline-offset: 2px;
 }
 .auth-error { color: var(--ot-danger); font-size: 13px; margin: 0; }
+.auth-success { color: var(--brand-presets-green-8); font-size: 13px; margin: 0; }
+.auth-result { display: flex; flex-direction: column; gap: 12px; }
 .btn-primary {
   background: var(--ot-primary);
   color: #fff;
@@ -90,6 +92,34 @@ button:focus-visible, a:focus-visible {
   color: var(--ot-muted);
 }
 .lang-toggle button.lang-active { background: var(--ot-primary); border-color: var(--ot-primary); color: #fff; }
+
+/* ---------- verify banner ---------- */
+.verify-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--brand-presets-green-1);
+  color: var(--brand-presets-green-8);
+  font-size: 13px;
+}
+.verify-banner-actions { display: flex; align-items: center; gap: 14px; }
+.verify-banner-actions button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+.verify-banner-actions button:disabled { opacity: 0.6; cursor: not-allowed; }
+.verify-banner-dismiss {
+  text-decoration: none !important;
+  font-size: 16px;
+  line-height: 1;
+}
 
 /* ---------- workspace ---------- */
 .workspace {

@@ -20,7 +20,19 @@
     "submitAcceptInvite": "Join workspace",
     "invalidInviteToken": "This invite link is invalid or was already used",
     "tenantSuspended": "This workspace is suspended",
-    "genericError": "Something went wrong. Try again."
+    "genericError": "Something went wrong. Try again.",
+    "verifyTitle": "Verify your e-mail",
+    "verifying": "Verifying your e-mail…",
+    "verifySuccess": "Your e-mail has been verified.",
+    "verifySuccessCta": "Go to open-triage",
+    "verifyMissingToken": "Missing verification link.",
+    "invalidVerifyToken": "This verification link is invalid or has expired.",
+    "resend": "Resend verification e-mail",
+    "resendSent": "Sent!",
+    "resending": "Sending…",
+    "bannerUnverified": "Please verify your e-mail address.",
+    "bannerResend": "Resend e-mail",
+    "bannerResendSent": "Sent!"
   },
   "nav": {
     "inbox": "Inbox",

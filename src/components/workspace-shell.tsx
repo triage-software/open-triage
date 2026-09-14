@@ -2,11 +2,13 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
+import { resendVerificationAction } from '@/app/actions/auth';
 
 interface WorkspaceShellProps {
   user: { email: string; name: string | null; role: string };
   tenant: { name: string };
   locale: string;
+  emailVerified: boolean;
   logoutAction: () => Promise<void>;
   chrome: React.ReactNode;
   labels: { inbox: string; knowledge: string; team: string; settings: string; logout: string };
@@ -28,13 +30,25 @@ const statusLabelsKey: Record<string, string> = {
   resolved: 'statusResolved',
 };
 
-export function WorkspaceShell({ user, tenant, logoutAction, chrome, labels }: WorkspaceShellProps) {
+export function WorkspaceShell({ user, tenant, emailVerified, logoutAction, chrome, labels }: WorkspaceShellProps) {
   const t = useTranslations('inbox');
   const tStates = useTranslations('states');
+  const tAuth = useTranslations('auth');
   const [conversations, setConversations] = useState<ConversationRowData[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState(false);
   const [, startLogout] = useTransition();
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [resendPending, startResend] = useTransition();
+  const [resendSent, setResendSent] = useState(false);
+
+  function handleResend() {
+    if (resendPending || resendSent) return;
+    startResend(async () => {
+      const res = await resendVerificationAction();
+      if (res.ok) setResendSent(true);
+    });
+  }
 
   useEffect(() => {
     let alive = true;
@@ -50,7 +64,26 @@ export function WorkspaceShell({ user, tenant, logoutAction, chrome, labels }: W
   const selectedConversation = conversations?.find((c) => c.id === selected) ?? null;
 
   return (
-    <div className="workspace">
+    <>
+      {!emailVerified && !bannerDismissed && (
+        <div className="verify-banner" role="status">
+          <span>{tAuth('bannerUnverified')}</span>
+          <div className="verify-banner-actions">
+            <button type="button" onClick={handleResend} disabled={resendPending || resendSent}>
+              {resendSent ? tAuth('bannerResendSent') : resendPending ? tAuth('resending') : tAuth('bannerResend')}
+            </button>
+            <button
+              type="button"
+              className="verify-banner-dismiss"
+              aria-label="Dismiss"
+              onClick={() => setBannerDismissed(true)}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+      <div className="workspace">
       <aside className="workspace-sidebar">
         <div className="workspace-identity">
           <strong>open-triage</strong>
@@ -124,6 +157,7 @@ export function WorkspaceShell({ user, tenant, logoutAction, chrome, labels }: W
         )}
       </section>
     </div>
+    </>
   );
 }
 

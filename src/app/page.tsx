@@ -13,7 +13,7 @@ export default async function HomePage() {
 
   if (status !== 200) redirect('/sign-in');
   const me = body as {
-    user?: { id: string; email: string; role: string; name: string | null; locale: string };
+    user?: { id: string; email: string; role: string; name: string | null; locale: string; emailVerified: boolean };
     tenant?: { id: string; name: string; plan: string };
     platformAdmin?: { email: string };
   };
@@ -29,6 +29,7 @@ export default async function HomePage() {
       user={{ email: me.user!.email, name: me.user!.name, role: me.user!.role }}
       tenant={{ name: me.tenant!.name }}
       locale={locale}
+      emailVerified={me.user!.emailVerified}
       logoutAction={logoutAction}
       chrome={<LanguageToggle current={locale} />}
       labels={{

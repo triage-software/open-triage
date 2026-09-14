@@ -140,6 +140,31 @@ export class AuthService {
     return { ok: true };
   }
 
+  /** POST /auth/resend-verification — issues a fresh verify token for the
+   *  session's own user; no-ops if already verified. */
+  async resendVerification(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException({ code: 'UNAUTHENTICATED' });
+    if (user.emailVerified) return { ok: true, alreadyVerified: true };
+
+    const verifyToken = generateToken();
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { verifyToken },
+    });
+
+    const queued = await this.producer.enqueueVerifyMail({
+      email: user.email,
+      token: verifyToken,
+      locale: user.locale,
+    });
+    if (!queued) {
+      console.info(`[auth] verification token for ${user.email}: ${verifyToken}`);
+    }
+
+    return { ok: true };
+  }
+
   /** POST /auth/accept-invite {token, password, name?} — QA-3: completes a
    *  teammate invite by setting the real password (one-time setup token was
    *  stored in verifyToken at invite time). Activates + verifies the account,
