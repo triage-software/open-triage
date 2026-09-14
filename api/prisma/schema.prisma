@@ -22,6 +22,7 @@ enum Plan {
 
 enum ConversationStatus {
   open
+  in_progress
   pending
   resolved
 }
@@ -130,7 +131,8 @@ model Session {
 model TenantSetting {
   tenantId String  @id
   // per-tenant AI config (model id), global key lives in GlobalSetting
-  aiModel  String?
+  aiModel          String?
+  aiModelUpdatedAt DateTime?
   tenant   Tenant  @relation(fields: [tenantId], references: [id])
 }
 
@@ -192,6 +194,7 @@ model Conversation {
   assignee  User?     @relation("assignee", fields: [assigneeId], references: [id])
   messages  Message[]
   comments  Comment[]
+  drafts    ConversationDraft[]
 
   @@index([tenantId, status, lastMessageAt])
   @@index([tenantId, assigneeId])
@@ -234,16 +237,75 @@ model Comment {
   @@index([tenantId, conversationId, createdAt])
 }
 
+// Agent composer drafts (prototype-parity persistence): one per
+// (conversation, user, mode) with a monotonic version for CAS saves.
+model ConversationDraft {
+  id             String   @id @default(uuid())
+  tenantId       String
+  conversationId String
+  userId         String
+  mode           String // reply | comment
+  text           String   @default("")
+  version        Int      @default(0)
+  baseRevision   Int      @default(0) // message count the draft was written against
+  updatedAt      DateTime @updatedAt
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+
+  @@unique([conversationId, userId, mode])
+  @@index([tenantId, userId])
+}
+
+// Per-recipient workspace notifications (assignment / urgent / escalation).
+model Notification {
+  id             String    @id @default(uuid())
+  tenantId       String
+  userId         String // recipient
+  conversationId String
+  type           String
+  title          String
+  body           String
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([tenantId, userId, readAt, createdAt])
+  @@index([tenantId, conversationId])
+}
+
 model KnowledgeItem {
   id        String   @id @default(uuid())
   tenantId  String
   title     String
   content   String
   source    String   @default("manual")
+  // workspace increment: prototype-parity knowledge workflow (mailbox/category
+  // scoping + review status). `status`/`title`/`content` are the denormalized
+  // latest version; the full history lives in KnowledgeItemVersion.
+  mailboxId String?
+  category  String?
+  status    String   @default("pending")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id])
+  tenant   Tenant                @relation(fields: [tenantId], references: [id])
+  versions KnowledgeItemVersion[]
 
+  @@index([tenantId])
+}
+
+model KnowledgeItemVersion {
+  id        String   @id @default(uuid())
+  tenantId  String
+  itemId    String
+  version   Int
+  title     String
+  content   String
+  status    String   @default("pending")
+  userId    String?
+  createdAt DateTime @default(now())
+
+  knowledgeItem KnowledgeItem @relation(fields: [itemId], references: [id])
+
+  @@unique([itemId, version])
   @@index([tenantId])
 }

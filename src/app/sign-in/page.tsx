@@ -3,6 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { cookies } from 'next/headers';
 import { AuthCard } from '@/components/auth-card';
 import { AuthSwitch, LanguageToggle } from '@/components/auth-chrome';
+import { TriageMark } from '@/components/ui';
 import { apiFetch } from '@/lib/api-client';
 
 export default async function SignInPage() {
@@ -17,7 +18,10 @@ export default async function SignInPage() {
   return (
     <main className="auth-page">
       <div className="auth-brand">
-        <strong>open-triage</strong>
+        <span className="auth-mark" aria-hidden="true">
+          <TriageMark size={24} />
+        </span>
+        <strong>open<span>·</span>triage</strong>
         <p>Shared-inbox triage for teams.</p>
       </div>
       <div className="auth-panel">

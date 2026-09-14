@@ -6,9 +6,10 @@ import type { AiKeyUsage, AiModel, AiSettingsPublic } from "@/lib/ai-types";
 import { readApiResponse } from "@/lib/api-response";
 import { useDemo } from "./demo-context";
 import { SignatureSettingsView } from "./signature-settings-view";
+import { ApiAiModelCard } from "./workspace/api-settings-card";
 
 export function AiSettingsView() {
-  const { state, refresh, toast } = useDemo();
+  const { state, refresh, toast, capabilities } = useDemo();
   const [saved, setSaved] = useState<AiSettingsPublic>(state.aiSettings);
   const [model, setModel] = useState(saved.model);
   const [key, setKey] = useState("");
@@ -72,7 +73,9 @@ export function AiSettingsView() {
 
   return (
     <div className="ai-settings-view">
-      <SignatureSettingsView />
+      {capabilities.signatureSettings && <SignatureSettingsView />}
+      {!capabilities.aiKeyManagement && <ApiAiModelCard />}
+      {capabilities.aiKeyManagement && (
       <section className="settings-card" aria-labelledby="openrouter-heading">
         <div className="settings-heading"><span className="settings-icon"><Sparkles size={22} /></span><div>
           <h2 id="openrouter-heading">OpenRouter</h2><p>Propozycje odpowiedzi i klasyfikacja zgłoszeń</p>
@@ -125,6 +128,7 @@ export function AiSettingsView() {
           <p className="settings-note">Sprawdzenie połączenia weryfikuje klucz i dostępność modelu bez generowania płatnej odpowiedzi.{saved.verifiedAt && ` Ostatnio sprawdzono: ${new Date(saved.verifiedAt).toLocaleString("pl-PL")}.`}</p>
         </form>
       </section>
+      )}
       <section className="settings-data-note">
         <h3>Co otrzymuje model?</h3>
         <p>Temat i ostatnie 12 publicznych wiadomości oraz do 8 zatwierdzonych dokumentów z wiedzy tej skrzynki. Długie wiadomości i dokumenty są skracane. Komentarze wewnętrzne i szkice pozostają w aplikacji.</p>
