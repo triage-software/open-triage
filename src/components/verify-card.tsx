@@ -3,12 +3,16 @@
 import { useActionState, useEffect, useRef, useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { verifyAction, resendVerificationAction, type VerifyState } from '@/app/actions/auth';
+
+const REDIRECT_DELAY_MS = 1200;
 
 /** /verify?token=… card — auto-submits verifyAction on mount (the user
  *  already confirmed intent by clicking the e-mail link, no button needed). */
 export function VerifyCard({ token, signedIn }: { token: string; signedIn: boolean }) {
   const t = useTranslations('auth');
+  const router = useRouter();
   const [state, formAction] = useActionState<VerifyState, FormData>(verifyAction, {});
   const fired = useRef(false);
 
@@ -19,6 +23,14 @@ export function VerifyCard({ token, signedIn }: { token: string; signedIn: boole
     fd.set('token', token);
     formAction(fd);
   }, [token, formAction]);
+
+  // Signed-in users just verified their account and belong in the app;
+  // a visitor verifying from an unauthenticated browser goes to sign in.
+  useEffect(() => {
+    if (!state.verified) return;
+    const timer = setTimeout(() => router.push(signedIn ? '/' : '/sign-in'), REDIRECT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [state.verified, signedIn, router]);
 
   const [resendPending, startResend] = useTransition();
   const [resendSent, setResendSent] = useState(false);
@@ -45,7 +57,7 @@ export function VerifyCard({ token, signedIn }: { token: string; signedIn: boole
           <p className="auth-success" role="status">
             {t('verifySuccess')}
           </p>
-          <Link href="/" className="btn-primary">
+          <Link href={signedIn ? '/' : '/sign-in'} className="btn-primary">
             {t('verifySuccessCta')}
           </Link>
         </div>
