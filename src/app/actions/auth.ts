@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { apiFetch, errorOf } from '@/lib/api-client';
+import { apiFetch, errorOf, relaySetCookies } from '@/lib/api-client';
 
 export type AuthState = { error?: string };
 
@@ -12,7 +12,7 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
   const locale = String(formData.get('locale') ?? 'en');
 
   const jar = await cookies();
-  const { status, body } = await apiFetch('/v1/auth/login', {
+  const { status, body, setCookie } = await apiFetch('/v1/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
@@ -22,6 +22,9 @@ export async function signInAction(_prev: AuthState, formData: FormData): Promis
     return { error: code === 'INVALID_CREDENTIALS' ? 'invalidCredentials' : 'genericError' };
   }
 
+  // The API sets ot_session on its own response (ADR-0002); relay it onto
+  // ours, otherwise the browser never receives it.
+  relaySetCookies(jar, setCookie);
   // ADR-0004: locale from session — store the user's chosen locale
   jar.set('ot_locale', locale, { httpOnly: false, sameSite: 'lax', path: '/' });
   redirect('/');
@@ -36,7 +39,7 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
   if (password.length < 10) return { error: 'passwordTooShort' };
 
   const jar = await cookies();
-  const { status, body } = await apiFetch('/v1/auth/signup', {
+  const { status, body, setCookie } = await apiFetch('/v1/auth/signup', {
     method: 'POST',
     body: JSON.stringify({ tenantName, email, password, locale }),
   });
@@ -46,16 +49,20 @@ export async function signUpAction(_prev: AuthState, formData: FormData): Promis
     return { error: code === 'EMAIL_TAKEN' ? 'emailTaken' : 'genericError' };
   }
 
+  relaySetCookies(jar, setCookie);
   jar.set('ot_locale', locale, { httpOnly: false, sameSite: 'lax', path: '/' });
   redirect('/');
 }
 
 export async function logoutAction() {
   const jar = await cookies();
-  await apiFetch('/v1/auth/logout', {
+  const { setCookie } = await apiFetch('/v1/auth/logout', {
     method: 'POST',
     cookies: Object.fromEntries(jar.getAll().map((c) => [c.name, c.value])),
   });
+  // The API clears ot_session on its own response; relay that so the
+  // browser's copy is cleared too, not just the server-side session row.
+  relaySetCookies(jar, setCookie);
   jar.delete('ot_locale');
   redirect('/sign-in');
 }
@@ -70,7 +77,7 @@ export async function acceptInviteAction(_prev: AuthState, formData: FormData): 
   if (password.length < 10) return { error: 'passwordTooShort' };
 
   const jar = await cookies();
-  const { status, body } = await apiFetch('/v1/auth/accept-invite', {
+  const { status, body, setCookie } = await apiFetch('/v1/auth/accept-invite', {
     method: 'POST',
     body: JSON.stringify({ token, password, ...(name ? { name } : {}) }),
   });
@@ -82,6 +89,7 @@ export async function acceptInviteAction(_prev: AuthState, formData: FormData): 
     return { error: 'genericError' };
   }
 
+  relaySetCookies(jar, setCookie);
   jar.set('ot_locale', locale, { httpOnly: false, sameSite: 'lax', path: '/' });
   redirect('/');
 }
