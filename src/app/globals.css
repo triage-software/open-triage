@@ -605,6 +605,29 @@ h3 {
   outline: none;
   padding-right: 4px;
 }
+/* Session identity (API mode) replaces the demo user switcher. */
+.session-user-name {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.session-logout {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--ot-neutral-7);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.session-logout:hover {
+  color: var(--ink);
+}
 .sidebar-toggle {
   display: none;
 }

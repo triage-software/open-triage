@@ -32,7 +32,16 @@ import {
 import { categories, priorities, statuses } from "@/lib/types";
 import type { Conversation, Variant } from "@/lib/types";
 import { isActiveUser } from "@/lib/team";
-import { DemoContext, useDemo, useDemoData } from "./demo-context";
+import {
+  DemoContext,
+  demoCapabilities,
+  useDemo,
+  useDemoAi,
+  useDemoData,
+  type WorkspaceAi,
+  type WorkspaceCapabilities,
+  type WorkspaceData,
+} from "./demo-context";
 import { Avatar, PriorityBadge, relativeTime, TriageMark } from "./ui";
 import { ConversationDetail } from "./conversation-detail";
 import { KnowledgeView, NotificationsView } from "./workspace-views";
@@ -41,8 +50,34 @@ import { AiSettingsView } from "./ai-settings-view";
 const variants: Variant[] = ["inbox", "queue", "board"];
 const variantLabels = { inbox: "Skrzynka", queue: "Kolejka", board: "Tablica" };
 
+/** Session identity shown in place of the demo user switcher (API mode). */
+export interface WorkspaceIdentity {
+  name: string;
+  email: string;
+  role: string;
+  logoutLabel: string;
+  onLogout: () => void;
+}
+
 export function SupportApp() {
   const data = useDemoData();
+  const ai = useDemoAi(data);
+  return (
+    <SupportWorkspace data={data} ai={ai} capabilities={demoCapabilities} />
+  );
+}
+
+export function SupportWorkspace({
+  data,
+  ai,
+  capabilities,
+  identity,
+}: {
+  data: WorkspaceData;
+  ai: WorkspaceAi;
+  capabilities: WorkspaceCapabilities;
+  identity?: WorkspaceIdentity;
+}) {
   const router = useRouter();
   const params = useSearchParams();
   const variant = variants.includes(params.get("variant") as Variant)
@@ -67,23 +102,28 @@ export function SupportApp() {
       for (const [key, value] of Object.entries(changes))
         if (value === null) next.delete(key);
         else next.set(key, value);
-      router.replace(`/prototype/support?${next.toString()}${hash}`, {
+      const query = next.toString();
+      // Preserve the current path so the shell serves both /prototype/support
+      // and the authenticated root workspace.
+      router.replace(`${window.location.pathname}${query ? `?${query}` : ""}${hash}`, {
         scroll: false,
       });
     },
     [params, router],
   );
   const openConversation = useCallback(
-    (id: string, commentId?: string) => {
+    async (id: string, commentId?: string) => {
       const conversation = data.state?.conversations.find((c) => c.id === id);
       if (conversation) setMailbox(conversation.mailboxId);
+      if (!conversation?.comments.length && data.loadConversation)
+        await data.loadConversation(id).catch(() => undefined);
       updateUrl(
         { view: "inbox", conversation: id, document: null },
         commentId ? `#comment-${commentId}` : "",
       );
       setSidebarOpen(false);
     },
-    [data.state?.conversations, updateUrl],
+    [data.state?.conversations, data.loadConversation, updateUrl],
   );
   const openKnowledge = useCallback(
     (id?: string) => {
@@ -216,19 +256,21 @@ export function SupportApp() {
   }
 
   return (
-    <DemoContext.Provider
-      value={{
-        state,
-        user,
-        sessionId: data.sessionId,
-        act: data.act,
-        refresh: data.refresh,
-        toast: data.toast,
-        openConversation,
-        openKnowledge,
-        openSettings,
-      }}
-    >
+      <DemoContext.Provider
+        value={{
+          state,
+          user,
+          sessionId: data.sessionId,
+          act: data.act,
+          refresh: data.refresh,
+          toast: data.toast,
+          openConversation,
+          openKnowledge,
+          openSettings,
+          capabilities,
+          ai,
+        }}
+      >
       <div className="app-shell">
         {sidebarOpen && (
           <button
@@ -238,7 +280,7 @@ export function SupportApp() {
           />
         )}
         <aside className={`sidebar ${sidebarOpen ? "sidebar-open" : ""}`}>
-          <a className="brand" href="/prototype/support">
+          <a className="brand" href={identity ? "/" : "/prototype/support"}>
             <span className="brand-symbol">
               <TriageMark size={20} />
             </span>
@@ -315,7 +357,7 @@ export function SupportApp() {
             </button>
           </nav>
           <div className="nav-section-label mailbox-heading">
-            SKRZYNKI <span>3</span>
+            SKRZYNKI <span>{state.mailboxes.length}</span>
           </div>
           <nav className="mailbox-nav" aria-label="Skrzynki">
             {state.mailboxes.map((box) => (
@@ -374,37 +416,62 @@ export function SupportApp() {
             </div>
           </div>
           <div className="sidebar-bottom">
-            <div className="demo-card">
-              <span className="demo-spark">
-                <Sparkles size={17} />
-              </span>
-              <strong>Miejsce na spokojniejszy support</strong>
-              <p>Wspólna wiedza. Lepsze odpowiedzi. Mniej przełączania.</p>
-              <span className="demo-label">
-                <span /> Lokalny panel
-              </span>
-            </div>
-            <button className="help-button" onClick={() => setHelpOpen(true)}>
-              <CircleHelp size={16} /> Jak działa demo?{" "}
-              <ArrowUpRight size={14} />
-            </button>
-            <div className="user-picker">
-              <Avatar user={user} size="small" />
-              <div>
-                <label htmlFor="demo-user">Pracujesz jako</label>
-                <select
-                  id="demo-user"
-                  value={user.id}
-                  onChange={(e) => data.selectUser(e.target.value)}
-                >
-                  {members.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
-                  ))}
-                </select>
+            {!identity && (
+              <>
+                <div className="demo-card">
+                  <span className="demo-spark">
+                    <Sparkles size={17} />
+                  </span>
+                  <strong>Miejsce na spokojniejszy support</strong>
+                  <p>Wspólna wiedza. Lepsze odpowiedzi. Mniej przełączania.</p>
+                  <span className="demo-label">
+                    <span /> Lokalny panel
+                  </span>
+                </div>
+                <button className="help-button" onClick={() => setHelpOpen(true)}>
+                  <CircleHelp size={16} /> Jak działa demo?{" "}
+                  <ArrowUpRight size={14} />
+                </button>
+              </>
+            )}
+            {identity ? (
+              <div className="user-picker">
+                <Avatar user={user} size="small" />
+                <div>
+                  <label>{identity.role}</label>
+                  <strong className="session-user-name" title={identity.email}>
+                    {identity.name}
+                  </strong>
+                  <button
+                    type="button"
+                    className="session-logout"
+                    onClick={identity.onLogout}
+                  >
+                    {identity.logoutLabel}
+                  </button>
+                </div>
               </div>
-            </div>
+            ) : (
+              data.selectUser && (
+                <div className="user-picker">
+                  <Avatar user={user} size="small" />
+                  <div>
+                    <label htmlFor="demo-user">Pracujesz jako</label>
+                    <select
+                      id="demo-user"
+                      value={user.id}
+                      onChange={(e) => data.selectUser!(e.target.value)}
+                    >
+                      {members.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )
+            )}
           </div>
         </aside>
         <main
@@ -461,12 +528,14 @@ export function SupportApp() {
                 {data.connected ? "Zmiany zsynchronizowane" : "Brak połączenia"}
               </span>
               <span className="topbar-divider" />
-              <span
-                className="top-demo"
-                title="Lokalny panel · wspólna skrzynka IMAP i SMTP"
-              >
-                LOKALNIE
-              </span>
+              {!identity && (
+                <span
+                  className="top-demo"
+                  title="Lokalny panel · wspólna skrzynka IMAP i SMTP"
+                >
+                  LOKALNIE
+                </span>
+              )}
             </div>
           </header>
           {!data.connected && (
@@ -585,7 +654,9 @@ export function SupportApp() {
                   </button>
                 </div>
               )}
-              <MailboxSyncNotice mailboxId={selectedMailbox?.id} />
+              {capabilities.mailCheck && (
+                <MailboxSyncNotice mailboxId={selectedMailbox?.id} />
+              )}
               <div className={`conversation-workspace variant-${variant}`}>
                 {variant === "inbox" ? (
                   <div className="inbox-list">

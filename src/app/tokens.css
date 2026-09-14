@@ -127,6 +127,8 @@
   --ot-brand-symbol-fg: #8c6850;
   --ot-brand-dot: #c98d68;
   --ot-shadow-base: #453e37;      /* warm shadow base */
+  --ot-radius-pill: 999px;        /* pill buttons / language toggle */
+  --ot-shadow-card: 0 1px 2px rgba(69, 62, 55, 0.06), 0 4px 16px rgba(69, 62, 55, 0.07);
 
   /* --- compat aliases (names consumed by styles/mvp.css) --- */
   --ot-line: var(--ot-border-soft);
