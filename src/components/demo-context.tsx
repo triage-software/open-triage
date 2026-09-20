@@ -5,12 +5,14 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import type { DemoAction } from "@/lib/store";
 import type { PublicState, User } from "@/lib/types";
 import { isActiveUser, team } from "@/lib/team";
+import { readApiResponse } from "@/lib/api-response";
 
 export class ClientError extends Error {
   constructor(
@@ -20,6 +22,41 @@ export class ClientError extends Error {
     super(message);
   }
 }
+/** Feature switches for the shared workspace shell: the demo driver enables
+ *  everything; the API driver degrades backend-less features gracefully. */
+export interface WorkspaceCapabilities {
+  /** Live presence heartbeats + collaborator avatars. */
+  presence: boolean;
+  /** Demo-only "work as" user switcher. */
+  impersonation: boolean;
+  /** OpenRouter key management UI (demo stores the key locally). */
+  aiKeyManagement: boolean;
+  /** Prototype "check mail" IMAP sync button. */
+  mailCheck: boolean;
+  /** Per-user signature editor. */
+  signatureSettings: boolean;
+  /** Knowledge create/edit/approve (API mode: owner/admin only). */
+  knowledgeEditing: boolean;
+  /** AI model setting write access (API mode: owner/admin only). */
+  aiModelEditing: boolean;
+}
+/** AI panel actions, provided by the active driver (demo store vs API). */
+export interface WorkspaceAi {
+  generateSuggestion: (
+    conversationId: string,
+    force?: boolean,
+  ) => Promise<{ needsHuman: boolean }>;
+  classify: (conversationId: string) => Promise<void>;
+}
+export const demoCapabilities: WorkspaceCapabilities = {
+  presence: true,
+  impersonation: true,
+  aiKeyManagement: true,
+  mailCheck: true,
+  signatureSettings: true,
+  knowledgeEditing: true,
+  aiModelEditing: true,
+};
 export interface DemoContextValue {
   state: PublicState;
   user: User;
@@ -30,6 +67,8 @@ export interface DemoContextValue {
   openConversation: (id: string, commentId?: string) => void;
   openKnowledge: (id?: string) => void;
   openSettings: () => void;
+  capabilities: WorkspaceCapabilities;
+  ai: WorkspaceAi;
 }
 export const DemoContext = createContext<DemoContextValue | null>(null);
 export function useDemo() {
@@ -59,6 +98,7 @@ export function useDemoData() {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToastMessage(""), 4500);
   }, []);
+
   const accept = useCallback(
     (next: PublicState) => {
       const current = stateRef.current;
@@ -145,4 +185,53 @@ export function useDemoData() {
     toast,
     toastMessage,
   };
+}
+
+export type DemoData = ReturnType<typeof useDemoData>;
+
+/** Structural contract the shared workspace shell needs from a data driver
+ *  (demo store or the API-backed workspace). */
+export interface WorkspaceData {
+  state: PublicState | null;
+  userId: string;
+  selectUser?: (id: string) => void;
+  sessionId: string;
+  connected: boolean;
+  error: string;
+  refresh: () => Promise<void>;
+  act: (action: DemoAction, requestId?: string) => Promise<PublicState>;
+  toast: (message: string) => void;
+  toastMessage: string;
+  loadConversation?: (id: string) => Promise<void>;
+}
+
+/** Demo-store AI driver: the prototype's local OpenRouter bridge. */
+export function useDemoAi(data: DemoData): WorkspaceAi {
+  const { userId, refresh, state } = data;
+  const generation = state?.generation;
+  return useMemo<WorkspaceAi>(
+    () => ({
+      async generateSuggestion(conversationId, force = false) {
+        const response = await fetch("/api/ai/suggestion", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ conversationId, generation, userId, force }),
+        });
+        const result = await readApiResponse<{ needsHuman: boolean }>(response);
+        await refresh();
+        return { needsHuman: result.needsHuman };
+      },
+      async classify(conversationId) {
+        await readApiResponse(
+          await fetch("/api/ai/classification", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ conversationId, generation, userId }),
+          }),
+        );
+        await refresh();
+      },
+    }),
+    [generation, userId, refresh],
+  );
 }

@@ -3,11 +3,10 @@
 import { useState } from "react";
 import { LoaderCircle, Sparkles } from "lucide-react";
 import type { Conversation } from "@/lib/types";
-import { readApiResponse } from "@/lib/api-response";
 import { useDemo } from "./demo-context";
 
 export function AiClassificationPanel({ conversation: c }: { conversation: Conversation }) {
-  const { state, user, refresh, openSettings } = useDemo();
+  const { state, refresh, openSettings, ai } = useDemo();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const job = c.aiTriage;
@@ -17,10 +16,7 @@ export function AiClassificationPanel({ conversation: c }: { conversation: Conve
     if (busy || pending) return;
     setBusy(true); setError("");
     try {
-      await readApiResponse(await fetch("/api/ai/classification", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationId: c.id, generation: state.generation, userId: user.id }),
-      }));
+      await ai.classify(c.id);
       await refresh();
     } catch (error) { setError((error as Error).message); }
     finally { setBusy(false); }

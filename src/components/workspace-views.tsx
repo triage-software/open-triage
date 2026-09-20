@@ -39,13 +39,15 @@ export function KnowledgeView({
 }: {
   selectedDocumentId: string | null;
 }) {
-  const { state, openKnowledge, act, toast } = useDemo();
+  const { state, openKnowledge, act, toast, capabilities } = useDemo();
   const [mailbox, setMailbox] = useState("all");
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [adding, setAdding] = useState(false);
   const [newMailbox, setNewMailbox] = useState(
-    state.mailboxes.find((box) => box.id === "test")!.id,
+    state.mailboxes.find((box) => box.id === "test")?.id ??
+      state.mailboxes[0]?.id ??
+      "",
   );
   const [newCategory, setNewCategory] = useState<Category>("Support");
   const [title, setTitle] = useState("");
@@ -75,7 +77,16 @@ export function KnowledgeView({
           </h1>
           <p>Z każdej rozmowy może wyniknąć lepsza odpowiedź.</p>
         </div>
-        <button className="button primary" onClick={() => setAdding(true)}>
+        <button
+          className="button primary"
+          disabled={!capabilities.knowledgeEditing}
+          title={
+            capabilities.knowledgeEditing
+              ? undefined
+              : "Tylko administrator może dodawać dokumenty."
+          }
+          onClick={() => setAdding(true)}
+        >
           <Plus size={16} /> Dodaj dokument
         </button>
       </section>
@@ -224,6 +235,7 @@ export function KnowledgeView({
           <KnowledgeEditor
             key={`${selected.id}:${state.generation}`}
             document={selected}
+            readOnly={!capabilities.knowledgeEditing}
             onClose={() => openKnowledge()}
           />
         )}
@@ -345,9 +357,11 @@ export function KnowledgeView({
 
 function KnowledgeEditor({
   document,
+  readOnly = false,
   onClose,
 }: {
   document: KnowledgeDocument;
+  readOnly?: boolean;
   onClose: () => void;
 }) {
   const { state, user, act, toast, openConversation } = useDemo();
@@ -494,6 +508,7 @@ function KnowledgeEditor({
             <p>{historical.body}</p>
             <button
               className="button"
+              disabled={readOnly}
               onClick={() => {
                 setTitle(historical.title);
                 setBody(historical.body);
@@ -512,6 +527,7 @@ function KnowledgeEditor({
                 aria-label="Tytuł dokumentu"
                 value={title}
                 maxLength={200}
+                readOnly={readOnly}
                 onChange={(e) => setTitle(e.target.value)}
               />
             </label>
@@ -521,6 +537,7 @@ function KnowledgeEditor({
                 aria-label="Treść dokumentu"
                 value={body}
                 maxLength={30000}
+                readOnly={readOnly}
                 onChange={(e) => setBody(e.target.value)}
               />
             </label>
@@ -542,7 +559,7 @@ function KnowledgeEditor({
       <footer>
         <button
           className="text-button reject"
-          disabled={busy || !!historical || base !== latest.version}
+          disabled={readOnly || busy || !!historical || base !== latest.version}
           onClick={() => void save("rejected")}
         >
           Odrzuć
@@ -550,6 +567,7 @@ function KnowledgeEditor({
         <button
           className="button"
           disabled={
+            readOnly ||
             busy ||
             !!historical ||
             base !== latest.version ||
@@ -563,6 +581,7 @@ function KnowledgeEditor({
         <button
           className="button primary"
           disabled={
+            readOnly ||
             busy ||
             !!historical ||
             base !== latest.version ||

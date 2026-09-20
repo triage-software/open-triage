@@ -1,9 +1,8 @@
+import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { getTranslations } from 'next-intl/server';
 import { apiFetch } from '@/lib/api-client';
-import { WorkspaceShell } from '@/components/workspace-shell';
-import { LanguageToggle } from '@/components/auth-chrome';
+import { ApiSupportApp } from '@/components/workspace/api-data-context';
 import { logoutAction } from '@/app/actions/auth';
 
 export default async function HomePage() {
@@ -21,23 +20,21 @@ export default async function HomePage() {
   // Platform admins land on the admin console (SPEC-0001: separate surface)
   if (me.platformAdmin) redirect('/admin');
 
-  const t = await getTranslations('nav');
-  const locale = me.user?.locale ?? jar.get('ot_locale')?.value ?? 'en';
-
   return (
-    <WorkspaceShell
-      user={{ email: me.user!.email, name: me.user!.name, role: me.user!.role }}
-      tenant={{ name: me.tenant!.name }}
-      locale={locale}
-      logoutAction={logoutAction}
-      chrome={<LanguageToggle current={locale} />}
-      labels={{
-        inbox: t('inbox'),
-        knowledge: t('knowledge'),
-        team: t('team'),
-        settings: t('settings'),
-        logout: t('logout'),
-      }}
-    />
+    <Suspense
+      fallback={<div className="boot-screen">Otwieramy wspólną skrzynkę…</div>}
+    >
+      <ApiSupportApp
+        session={{
+          id: me.user!.id,
+          email: me.user!.email,
+          name: me.user!.name,
+          role: me.user!.role,
+          locale: me.user!.locale,
+        }}
+        tenantName={me.tenant!.name}
+        logoutAction={logoutAction}
+      />
+    </Suspense>
   );
 }

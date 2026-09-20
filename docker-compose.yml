@@ -6,10 +6,12 @@ services:
       POSTGRES_USER: opentriage
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opentriage}
       POSTGRES_DB: opentriage
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U opentriage"]
+      test: ['CMD-SHELL', 'pg_isready -U opentriage']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -17,7 +19,7 @@ services:
   redis:
     image: redis:7-alpine
     healthcheck:
-      test: ["CMD", "redis-cli", "PING"]
+      test: ['CMD', 'redis-cli', 'PING']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -47,9 +49,9 @@ services:
       redis:
         condition: service_healthy
     # Migrations run by entrypoint before serving (topology rule)
-    command: ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node dist/main.js"]
+    command: ['sh', '-c', 'node node_modules/prisma/build/index.js migrate deploy && node dist/main.js']
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:4000/healthz || exit 1"]
+      test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:4000/healthz || exit 1']
       interval: 10s
       timeout: 5s
       retries: 10
@@ -58,7 +60,7 @@ services:
     build: ./api
     # Same image as api, worker entrypoint (topology: BullMQ consumers).
     # Migrations are guaranteed by the api service; the worker only consumes.
-    command: ["node", "dist/worker/worker.js"]
+    command: ['node', 'dist/worker/worker.js']
     environment:
       DATABASE_URL: postgresql://opentriage:${POSTGRES_PASSWORD:-opentriage}@db:5432/opentriage
       SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env}
@@ -88,38 +90,38 @@ services:
       APP_URL: ${APP_URL:-http://localhost:3000}
       NODE_ENV: production
     ports:
-      - "${WEB_PORT:-3000}:3000"
+      - '${WEB_PORT:-3000}:3000'
     depends_on:
       api:
         condition: service_healthy
 
   vikingdb:
     image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ['redis-server', '--appendonly', 'yes']
     volumes:
       - vikingdata:/data
     # OpenViking endpoint placeholder (ADR-0003). Set VIKINGDB_URL to an
     # external OpenViking endpoint instead, or remove this service; the API
     # degrades gracefully when the index is unreachable.
-    profiles: ["with-vikingdb"]
+    profiles: ['with-vikingdb']
 
   # --- verification profile (docs/qa/e2e.sh mail scenarios) ---
   # SMTP sink + IMAP source, kept out of the production-style default stack.
   mailpit:
     image: axllent/mailpit:latest
     ports:
-      - "${MAILPIT_UI_PORT:-8025}:8025"
-    profiles: ["verify-mail"]
+      - '${MAILPIT_UI_PORT:-8025}:8025'
+    profiles: ['verify-mail']
 
   greenmail:
     image: greenmail/standalone:2.1.8
     environment:
-      GREENMAIL_OPTS: "-Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.users=verify@localhost:verify -Dgreenmail.auth.disabled=false"
-      GREENMAIL_OPTS_STANDALONE: "-Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.users=verify@localhost:verify"
+      GREENMAIL_OPTS: '-Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.users=verify@localhost:verify -Dgreenmail.auth.disabled=false'
+      GREENMAIL_OPTS_STANDALONE: '-Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.users=verify@localhost:verify'
     ports:
-      - "${GREENMAIL_IMAP_PORT:-3143}:3143"
-      - "${GREENMAIL_SMTP_PORT:-3025}:3025"
-    profiles: ["verify-mail"]
+      - '${GREENMAIL_IMAP_PORT:-3143}:3143'
+      - '${GREENMAIL_SMTP_PORT:-3025}:3025'
+    profiles: ['verify-mail']
 
 volumes:
   pgdata:

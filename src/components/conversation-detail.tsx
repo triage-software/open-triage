@@ -40,7 +40,7 @@ export function ConversationDetail({
   conversation: Conversation;
   onClose: () => void;
 }) {
-  const { state, user, sessionId, act, toast, openKnowledge } = useDemo();
+  const { state, user, sessionId, act, toast, openKnowledge, capabilities } = useDemo();
   const savedDraft = state.drafts.find(
     (draft) =>
       draft.conversationId === c.id &&
@@ -68,7 +68,7 @@ export function ConversationDetail({
   pulse.current = { mode, writing };
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (!capabilities.presence || !sessionId) return;
     const payload = (remove = false) =>
       JSON.stringify({
         type: "presence",
@@ -114,9 +114,9 @@ export function ConversationDetail({
       window.removeEventListener("pagehide", leave);
       leave();
     };
-  }, [c.id, state.generation, user.id, sessionId]);
+  }, [c.id, state.generation, user.id, sessionId, capabilities.presence]);
   useEffect(() => {
-    if (!sessionId || document.hidden) return;
+    if (!capabilities.presence || !sessionId || document.hidden) return;
     void fetch("/api/demo", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -135,7 +135,7 @@ export function ConversationDetail({
         },
       }),
     }).catch(() => undefined);
-  }, [writing, mode, c.id, state.generation, user.id, sessionId]);
+  }, [writing, mode, c.id, state.generation, user.id, sessionId, capabilities.presence]);
 
   useEffect(() => {
     function scrollToHash() {

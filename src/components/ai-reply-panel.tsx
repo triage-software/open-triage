@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { ArrowRight, BookOpen, ChevronDown, LoaderCircle, RefreshCw, Sparkles, X } from "lucide-react";
 import type { Conversation } from "@/lib/types";
-import { knowledgeStamp, type AiSuggestion } from "@/lib/ai-types";
-import { readApiResponse } from "@/lib/api-response";
+import { knowledgeStamp } from "@/lib/ai-types";
 import { useDemo } from "./demo-context";
 
 export function AiReplyPanel({ conversation: c, onUse }: { conversation: Conversation; onUse: (text: string) => void }) {
-  const { state, user, act, refresh, toast, openKnowledge, openSettings } = useDemo();
+  const { state, act, refresh, toast, openKnowledge, openSettings, ai } = useDemo();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -20,11 +19,7 @@ export function AiReplyPanel({ conversation: c, onUse }: { conversation: Convers
     if (busy) return;
     setBusy(true); setError("");
     try {
-      const response = await fetch("/api/ai/suggestion", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ conversationId: c.id, generation: state.generation, userId: user.id, force }),
-      });
-      const result = await readApiResponse<AiSuggestion>(response);
+      const result = await ai.generateSuggestion(c.id, force);
       await refresh();
       setOpen(true);
       toast(result.needsHuman ? "AI wskazuje sprawę do konsultacji z człowiekiem." : "Propozycja odpowiedzi gotowa do sprawdzenia.");
