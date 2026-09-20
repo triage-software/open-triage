@@ -34,7 +34,7 @@ export function defaultSignatureMjml(signature: EmployeeSignature): string {
       <mj-section css-class="mail-section">
         <mj-column width="32%" padding="5px 20px 18px 0">
           <mj-text color="#18385c" font-size="20px" font-weight="700" line-height="1.25" letter-spacing="0.5px">${escapeHtml(signature.company)}</mj-text>
-          <mj-text color="#777777" font-size="10px" padding="14px 0 0">ALLEGRO ADS<br />PARTNER</mj-text>
+          <mj-text color="#777777" font-size="10px" padding="14px 0 0">CUSTOMER<br />SUPPORT</mj-text>
         </mj-column>
         <mj-column width="68%" border-left="2px solid #18385c" padding="0 0 0 24px">
           <mj-text color="#18385c" font-size="22px" font-weight="700" line-height="1.2">${escapeHtml(signature.name)}</mj-text>
@@ -42,12 +42,6 @@ export function defaultSignatureMjml(signature: EmployeeSignature): string {
           ${signature.phone ? `<mj-text font-size="12px" padding="0 0 7px">☎&nbsp; ${contactLink(`tel:${signature.phone.replace(/\s/g, "")}`, signature.phone)}</mj-text>` : ""}
           <mj-text font-size="12px" padding="0 0 7px">✉&nbsp; ${contactLink(`mailto:${signature.email}`, signature.email)}</mj-text>
           <mj-text font-size="12px">🌐&nbsp; ${contactLink(`https://${signature.website}`, signature.website)}</mj-text>
-          <mj-text font-size="11px" padding="18px 0 0">
-            ${contactLink("https://pl.linkedin.com/company/open-triage", "LinkedIn")} &nbsp;
-            ${contactLink("https://www.instagram.com/opentriage/", "Instagram")} &nbsp;
-            ${contactLink("https://www.facebook.com/profile.php?id=100063595450965", "Facebook")} &nbsp;
-            ${contactLink("https://www.youtube.com/@opentriage", "YouTube")}
-          </mj-text>
         </mj-column>
       </mj-section>
       <mj-section css-class="mail-section" padding="14px 0 0">

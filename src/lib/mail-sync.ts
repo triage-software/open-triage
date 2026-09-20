@@ -22,7 +22,7 @@ function settings() {
   const password = process.env.TRIAGE_IMAP_PASSWORD;
   const host = process.env.TRIAGE_IMAP_HOST;
   const user = process.env.TRIAGE_IMAP_USER;
-  if (!password || !host || user !== "support@example.com") return null;
+  if (!password || !host || user !== "support@opentriage.com") return null;
   return { password, host, user, port: Number(process.env.TRIAGE_IMAP_PORT || 993) };
 }
 

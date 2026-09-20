@@ -15,7 +15,7 @@ registerHooks({ resolve(specifier, context, nextResolve) {
 
 const mail = (id, references = []) => ({ subject: "Licencja", email: {
   id, messageId: `<${id}@example.test>`, references, direction: "inbound", authorName: "Klient",
-  from: "client@example.test", to: "support@example.com", body: `Licencja ${id}`, createdAt: new Date().toISOString(),
+  from: "client@example.test", to: "support@opentriage.com", body: `Licencja ${id}`, createdAt: new Date().toISOString(),
 } });
 
 test("automatyczna klasyfikacja po odbiorze — izolowany IMAP, AI i trwały zapis", async (t) => {
@@ -31,7 +31,7 @@ test("automatyczna klasyfikacja po odbiorze — izolowany IMAP, AI i trwały zap
     async getMailboxLock() { return { release() {} }; }
     async search() { return [1]; }
     async fetchOne() { return { source: Buffer.from([
-      "From: Klient <client@example.test>", "To: support@example.com", "Subject: Licencja",
+      "From: Klient <client@example.test>", "To: support@opentriage.com", "Subject: Licencja",
       "Message-ID: <first@example.test>", "Content-Type: text/plain; charset=utf-8", "", "Problem z licencja.",
     ].join("\r\n")) }; }
     close() {}
@@ -39,7 +39,7 @@ test("automatyczna klasyfikacja po odbiorze — izolowany IMAP, AI i trwały zap
   try {
     process.chdir(directory);
     process.env.TRIAGE_IMAP_HOST = "imap.example.test";
-    process.env.TRIAGE_IMAP_USER = "support@example.com";
+    process.env.TRIAGE_IMAP_USER = "support@opentriage.com";
     process.env.TRIAGE_IMAP_PASSWORD = "fake-test-password";
     globalThis.fetch = async (url, options) => {
       if (url === "https://openrouter.ai/api/v1/models") return Response.json({ data: [{

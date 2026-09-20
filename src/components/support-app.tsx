@@ -792,10 +792,10 @@ export function SupportWorkspace({
               </span>
               <h2 id="help-title">Poznaj swój spokojniejszy support.</h2>
               <p>
-                To lokalny panel. Skrzynka support@example.com odbiera prawdziwe
+                To lokalny panel. Skrzynka support@opentriage.com odbiera prawdziwe
                 maile przez IMAP, co 30 sekund. Skrzynki hello@opentriage.com i
-                hello@opentriage.com czekają na podłączenie. Odpowiedzi są wysyłane
-                z support@example.com, z kopią w folderze Wysłane wspólnej skrzynki.
+                help@opentriage.com czekają na podłączenie. Odpowiedzi są wysyłane
+                z support@opentriage.com, z kopią w folderze Wysłane wspólnej skrzynki.
                 Wiadomości demo nie są tworzone ponownie.
               </p>
               <ol>
@@ -986,7 +986,7 @@ function MailboxSyncNotice({ mailboxId }: { mailboxId?: string }) {
       const result = await response.json();
       await refresh();
       if (!response.ok) throw new Error(result.error || "Sprawdź konfigurację IMAP w .env.local.");
-      toast("Skrzynka support@example.com jest aktualna.");
+      toast("Skrzynka support@opentriage.com jest aktualna.");
     } catch (error) {
       toast(error instanceof Error ? error.message : "Nie można sprawdzić poczty.");
     } finally {
@@ -997,7 +997,7 @@ function MailboxSyncNotice({ mailboxId }: { mailboxId?: string }) {
     <div className="mailbox-notice" role="status">
       <Mail size={16} />
       <span>
-        <strong>support@example.com</strong> — {sync?.status === "connected"
+        <strong>support@opentriage.com</strong> — {sync?.status === "connected"
           ? `IMAP połączony · co 30 s · ostatnio ${new Date(sync.lastSuccessAt!).toLocaleTimeString("pl-PL")}`
           : sync?.status === "syncing" ? "Pobieranie poczty…"
             : sync?.status === "error" ? sync.error

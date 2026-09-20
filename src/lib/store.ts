@@ -4,7 +4,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { seedState } from "./seed";
-import { migrateMailboxes, removeSampleMail } from "./mailboxes";
+import { migrateMailboxes, removeSampleMail, syncMailboxProfiles } from "./mailboxes";
 import { isActiveUser, migrateTeam, syncTeamProfiles } from "./team";
 import { mergeIncomingMail, type IncomingMail } from "./mail-import";
 import { MailError as ActionError, reserveReply, claimReply, acceptReply, recordSentCopy } from "./mail-outbox";
@@ -122,7 +122,9 @@ async function load(): Promise<DemoState> {
       removeSampleMail(state);
       await atomicWrite(file, JSON.stringify(state, null, 2));
     }
-    if (syncTeamProfiles(state)) {
+    const teamChanged = syncTeamProfiles(state);
+    const mailboxesChanged = syncMailboxProfiles(state);
+    if (teamChanged || mailboxesChanged) {
       state.revision++;
       await atomicWrite(file, JSON.stringify(state, null, 2));
     }
@@ -185,7 +187,7 @@ export async function saveUserSignature(input: {
       throw new ActionError("Nie znaleziono aktywnego pracownika.", 400);
     if ((user.signature?.custom?.version ?? 0) !== input.expectedVersion)
       throw new ActionError("Podpis zmienił się w innej karcie. Wczytaj aktualną wersję przed zapisem.", 409);
-    user.signature = { ...signatureFor(user, "support@example.com"), custom: {
+    user.signature = { ...signatureFor(user, "support@opentriage.com"), custom: {
       ...compiled, version: input.expectedVersion + 1, updatedAt: new Date().toISOString(), updatedBy: input.actorId,
     } };
     state.revision++;

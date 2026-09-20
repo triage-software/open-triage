@@ -3,16 +3,16 @@ import type { DemoState, Mailbox } from "./types";
 export const mailboxes: Mailbox[] = [
   {
     id: "general",
-    name: "Open Triage",
+    name: "Open Triage · Ogólna",
     email: "hello@opentriage.com",
     color: "#c98d68",
     description: "Skrzynka docelowa · jeszcze niepodłączona",
     mode: "unconnected",
   },
   {
-    id: "opentriage",
-    name: "Open Triage",
-    email: "hello@opentriage.com",
+    id: "support",
+    name: "Open Triage · Wsparcie",
+    email: "help@opentriage.com",
     color: "#874c00",
     description: "Skrzynka docelowa · jeszcze niepodłączona",
     mode: "unconnected",
@@ -20,7 +20,7 @@ export const mailboxes: Mailbox[] = [
   {
     id: "test",
     name: "Open Triage · Test",
-    email: "support@example.com",
+    email: "support@opentriage.com",
     color: "#91887d",
     description: "Skrzynka testowa · odbiór IMAP nie jest podłączony",
     mode: "unconnected",
@@ -28,6 +28,19 @@ export const mailboxes: Mailbox[] = [
 ];
 
 export const testMailbox = mailboxes.find((box) => box.id === "test")!;
+
+export function syncMailboxProfiles(state: DemoState): boolean {
+  let changed = false;
+  state.mailboxes = state.mailboxes.map((mailbox) => {
+    const profile = mailboxes.find((item) => item.id === mailbox.id);
+    if (!profile) return mailbox;
+    const next = { ...structuredClone(profile), mode: mailbox.mode };
+    if (JSON.stringify(mailbox) === JSON.stringify(next)) return mailbox;
+    changed = true;
+    return next;
+  });
+  return changed;
+}
 
 // Keep conversation and comment IDs stable so existing links and drafts survive.
 export function migrateMailboxes(state: DemoState): boolean {

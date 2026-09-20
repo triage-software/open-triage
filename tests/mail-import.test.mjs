@@ -12,7 +12,7 @@ function message(id, references = []) {
     email: {
       id, messageId: `<${id}@example.test>`, references,
       direction: "inbound", authorName: "Klient", from: "klient@example.test",
-      to: "support@example.com", body: `Wiadomość ${id}`,
+      to: "support@opentriage.com", body: `Wiadomość ${id}`,
       createdAt: "2026-09-03T12:00:00.000Z",
     },
   };
@@ -77,7 +77,7 @@ test("wiadomość bez Message-ID jest deduplikowana po identyfikatorze IMAP", ()
 test("MIME dekoduje polski temat, treść HTML, referencje i załączniki", async () => {
   const source = Buffer.from([
     'From: "Klient" <klient@example.test>',
-    'To: support@example.com',
+    'To: support@opentriage.com',
     `Subject: =?UTF-8?B?${Buffer.from("Zażółć gęślą jaźń").toString("base64")}?=`,
     'Message-ID: <new@example.test>',
     'In-Reply-To: <old@example.test>',

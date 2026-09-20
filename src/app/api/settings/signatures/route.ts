@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const state = await getState();
   const user = state.users.find((item) => item.id === request.nextUrl.searchParams.get("userId") && item.active !== false);
   if (!user) return json({ error: "Nie znaleziono pracownika." }, 404);
-  const signature = signatureFor(user, "support@example.com");
+  const signature = signatureFor(user, "support@opentriage.com");
   const defaultMjml = defaultSignatureMjml(signature);
   return json({ ...(signature.custom ?? await compileSignatureMjml(defaultMjml)), version: signature.custom?.version ?? 0, defaultMjml });
 }

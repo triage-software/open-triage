@@ -21,11 +21,11 @@ test("edytowalny MJML: walidacja, trwałość, konflikty i podpis utrwalony w MI
     process.chdir(directory);
     const { getState, saveUserSignature } = await import("../src/lib/store.ts");
     const state = await getState();
-    const source = defaultSignatureMjml(employeeSignatures.anna).replace("729 921 970", "111 222 333").replace("Kierownik Działu Administracji i Finansów", "Nowe stanowisko");
+    const source = defaultSignatureMjml(employeeSignatures.anna).replace("Finanse i administracja", "Nowe stanowisko");
     const input = { userId: "anna", actorId: "michal", generation: state.generation, expectedVersion: 0, mjml: source };
     const preview = await compileSignatureMjml(source);
     assert.match(preview.text, /Nowe stanowisko/);
-    assert.match(preview.text, /111 222 333/);
+    assert.match(preview.text, /anna\.nowak@opentriage\.com/);
     assert.equal((await getState()).users.find((u) => u.id === "anna").signature.custom, undefined);
     const first = await saveUserSignature(input);
     assert.equal(first.version, 1);
@@ -40,7 +40,7 @@ test("edytowalny MJML: walidacja, trwałość, konflikty i podpis utrwalony w MI
     for (const invalid of ['<mj-include path=".env.local" />', '<script>alert(1)</script>', '<a href="javascript:alert(1)">x</a>']) {
       await assert.rejects(compileSignatureMjml(source.replace("Pozdrawiam,", invalid)), /nie może/);
     }
-    const frozen = signatureFor(restored, "support@example.com");
+    const frozen = signatureFor(restored, "support@opentriage.com");
     const outcomes = await Promise.allSettled([
       saveUserSignature({ ...input, expectedVersion: 1, mjml: source.replace("Nowe stanowisko", "Kolejne stanowisko") }),
       saveUserSignature({ ...input, expectedVersion: 1, mjml: source.replace("Nowe stanowisko", "Równoległa zmiana") }),
@@ -51,7 +51,7 @@ test("edytowalny MJML: walidacja, trwałość, konflikty i podpis utrwalony w MI
     assert.match(html, /Kwota \$&amp;/);
     assert.doesNotMatch(html, /<script>/);
     const mime = await simpleParser(await composeReply({
-      subject: "Test podpisu", email: { from: "support@example.com", to: "nobody@example.test", body: "Treść odpowiedzi",
+      subject: "Test podpisu", email: { from: "support@opentriage.com", to: "nobody@example.test", body: "Treść odpowiedzi",
         createdAt: new Date().toISOString(), signature: frozen },
     }));
     assert.match(mime.html, /Treść odpowiedzi[\s\S]*Nowe stanowisko/);

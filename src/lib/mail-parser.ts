@@ -32,7 +32,7 @@ export async function parseIncomingMail(
       direction: "inbound",
       authorName: sender?.name || sender?.address || "Nieznany nadawca",
       from: sender?.address ?? "",
-      to: "support@example.com",
+      to: "support@opentriage.com",
       body: body || "(wiadomość bez treści tekstowej — pobierz oryginał)",
       createdAt: date.toISOString(),
       messageId: mail.messageId,

@@ -5,26 +5,24 @@ export const companyLegal = "Open Triage · opentriage.com";
 export const employeeSignatures: Record<string, EmployeeSignature> = {
   anna: {
     name: "Anna Nowak",
-    title: "Kierownik Działu Administracji i Finansów",
-    phone: "",
+    title: "Finanse i administracja",
     email: "anna.nowak@opentriage.com",
-    website: "www.opentriage.com",
+    website: "opentriage.com",
     company: "Open Triage",
   },
   jan: {
     name: "Jan Kowalski",
-    title: "CEO | Prezes Zarządu",
-    phone: "",
+    title: "CEO",
     email: "jan.kowalski@opentriage.com",
-    website: "www.opentriage.com",
+    website: "opentriage.com",
     company: "Open Triage",
   },
   michal: {
     name: "Michał Kluska",
-    title: "Zespół wsparcia Open Triage",
-    email: "support@example.com",
-    website: "www.opentriage.com",
-    company: "Open Triage · Open Triage",
+    title: "Zespół wsparcia",
+    email: "michal.kluska@opentriage.com",
+    website: "opentriage.com",
+    company: "Open Triage",
   },
 };
 
@@ -33,8 +31,8 @@ export function signatureFor(user: Pick<User, "id" | "name" | "role" | "signatur
     name: user.name,
     title: user.role,
     email: mailboxEmail,
-    website: "www.opentriage.com",
-    company: "Open Triage · Open Triage",
+    website: "opentriage.com",
+    company: "Open Triage",
   });
 }
 

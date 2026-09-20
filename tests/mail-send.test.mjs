@@ -9,7 +9,7 @@ function fixture() {
   const state = {
     generation: "generation", appliedRequests: [],
     users: [{ id: "michal", name: "Michał Kluska", active: true }],
-    mailboxes: [{ id: "test", email: "support@example.com", mode: "imap" }],
+    mailboxes: [{ id: "test", email: "support@opentriage.com", mode: "imap" }],
     conversations: [{
       id: "thread", mailboxId: "test", subject: "Pytanie o licencję", publicRevision: 1,
       status: "W toku", comments: [{ body: "TAJNY KOMENTARZ WEWNĘTRZNY" }], activities: [],
@@ -30,8 +30,8 @@ test("wspólny From i Reply-To, nagłówki wątku, komentarze poza MIME", async 
   const job = reserveReply(state, request);
   const raw = await composeReply(job);
   const parsed = await simpleParser(raw);
-  assert.equal(parsed.from.value[0].address, "support@example.com");
-  assert.equal(parsed.replyTo.value[0].address, "support@example.com");
+  assert.equal(parsed.from.value[0].address, "support@opentriage.com");
+  assert.equal(parsed.replyTo.value[0].address, "support@opentriage.com");
   assert.equal(parsed.to.value[0].address, "customer@example.test");
   assert.equal(parsed.subject, "Re: Pytanie o licencję");
   assert.equal(parsed.inReplyTo, "<inbound@example.test>");
@@ -39,8 +39,7 @@ test("wspólny From i Reply-To, nagłówki wątku, komentarze poza MIME", async 
   assert.deepEqual(parsed.references, ["<root@example.test>", "<inbound@example.test>"]);
   assert.ok(parsed.text.startsWith(request.action.text));
   assert.match(parsed.text, /Michał Kluska/);
-  assert.match(parsed.text, /support@example\.com/);
-  assert.match(parsed.html, /Open Triage · Open Triage/);
+  assert.match(parsed.text, /michal\.kluska@opentriage\.com/);
   assert.ok(!raw.toString().includes("TAJNY KOMENTARZ"));
   assert.ok(!raw.toString().includes("PYTANIE KLIENTA"));
   assert.equal(job.email.authorName, "Michał Kluska");

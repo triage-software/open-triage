@@ -2,7 +2,7 @@
 
 A local, interactive prototype of a shared support inbox. Next.js 16, React 19, TypeScript and Tailwind CSS 4.
 
-**Current state:** `support@example.com` receives real messages over IMAP and sends replies over SMTP. A copy of each reply is placed in the "Sent" folder of the same mailbox. The server checks INBOX on startup and every 30 seconds; the panel refreshes data every 2 seconds. Demo messages have been removed.
+**Current state:** `support@opentriage.com` receives real messages over IMAP and sends replies over SMTP. A copy of each reply is placed in the "Sent" folder of the same mailbox. The server checks INBOX on startup and every 30 seconds; the panel refreshes data every 2 seconds. Demo messages have been removed.
 
 ## Running it
 
@@ -17,13 +17,13 @@ Open the [local demo](http://127.0.0.1:3000/prototype/support?variant=inbox).
 
 The panel is available only on the local machine. Run a single server process for this data directory. Do not run `npm run dev` and `npm start` at the same time against the same data.
 
-The mail connection uses `.env.local` (outside Git, server-side only). In a fresh copy of the project, copy `.env.example` to `.env.local` and fill in the password. The configured mailbox is `support@example.com`, server `mail.example.com`, port `993`, with verified TLS. Login credentials never reach the browser or `state.json`.
+The mail connection uses `.env.local` (outside Git, server-side only). In a fresh copy of the project, copy `.env.example` to `.env.local` and fill in the password. The configured mailbox is `support@opentriage.com`, server `mail.example.com`, port `993`, with verified TLS. Login credentials never reach the browser or `state.json`.
 
 SMTP uses the same server on port `465` with TLS. `TRIAGE_SMTP_PASSWORD` may be left empty to use the same mailbox's IMAP password. `TRIAGE_IMAP_SENT_FOLDER=SENT` points to home.pl's sent folder; without this variable the app looks for the folder the server marks as `\Sent`.
 
 The mailbox bar shows the IMAP status and the time of the last successful check. "Check mail" fetches new mail immediately. Automatic receiving works whenever the local server is running, even after browser tabs are closed. The mailbox is opened read-only: the app does not delete messages from the server or change read flags.
 
-A reply has a shared `From` and `Reply-To`: `support@example.com`. The staff member is recorded as the author in the panel. `Message-ID`, `In-Reply-To` and `References` tie the reply to the thread in other mail clients as well. Once accepted by SMTP, the identical MIME message is saved via IMAP to "Sent". There is no need to add your own address to CC. Internal comments are not added to the outgoing message or its copy.
+A reply has a shared `From` and `Reply-To`: `support@opentriage.com`. The staff member is recorded as the author in the panel. `Message-ID`, `In-Reply-To` and `References` tie the reply to the thread in other mail clients as well. Once accepted by SMTP, the identical MIME message is saved via IMAP to "Sent". There is no need to add your own address to CC. Internal comments are not added to the outgoing message or its copy.
 
 With `npm run dev`, [React Grab](https://github.com/aidenybai/react-grab) runs, loaded from a local package. Hover over a UI element, press `⌘C` (Windows/Linux: `Ctrl+C`), and paste the copied context into the conversation. The tool attaches the component and its location in the code. It is disabled in the production build.
 
@@ -36,7 +36,7 @@ npm start
 ## What you can check out
 
 - Three layouts: [inbox](http://127.0.0.1:3000/prototype/support?variant=inbox), [queue](http://127.0.0.1:3000/prototype/support?variant=queue), [board](http://127.0.0.1:3000/prototype/support?variant=board). Layouts are switched via tabs in a compact bar above the conversations. In development mode, keyboard arrows also work outside of editable fields.
-- Three mailboxes: `hello@opentriage.com`, `hello@opentriage.com` and `support@example.com`. IMAP and SMTP work for the last one; the other two are awaiting connection.
+- Three mailboxes: `hello@opentriage.com`, `help@opentriage.com` and `support@opentriage.com`. IMAP and SMTP work for the last one; the other two are awaiting connection.
 - The team: Michał Kluska, Jan Kowalski and Anna Nowak. Staff selection and new assignments cover only these three people.
 - Assigning conversations, priorities, categories, statuses, search and filters.
 - The email content takes up the main part of the panel. The AI suggestion and the empty editor are collapsed by default. A saved draft opens the editor; collapsing it manually keeps the text.
@@ -105,7 +105,7 @@ After a reply is accepted by SMTP, an IMAP error only retries the copy save, eve
 
 The message generator and the demo restore button and operation have been removed. The first run creates only the mailbox and team configuration. The data directory is excluded from Git.
 
-The version 4 migration removes recognized sample conversations from `support@example.com` along with related drafts, notifications, archives, and demo knowledge. Manually added documents and conversations outside the sample set remain. The copy of the previous state in `data/prototype/backups/` and historical Markdown files are not loaded into the panel.
+The version 4 migration removes recognized sample conversations from `support@opentriage.com` along with related drafts, notifications, archives, and demo knowledge. Manually added documents and conversations outside the sample set remain. The copy of the previous state in `data/prototype/backups/` and historical Markdown files are not loaded into the panel.
 
 Changing the team also saves a JSON copy. Previous demo profiles become inactive but retain entry authorship, prior assignments, and drafts. An assignment to a former profile can be handed off to one of the three people on the current team. A tab with a former profile selected switches to Michał.
 

@@ -23,7 +23,7 @@ test("generowanie: trwały wynik, jedna równoległa operacja, brak nadpisania n
     state.conversations.push({ id: "thread", number: 1, mailboxId: "test", subject: "Licencja", customer: { name: "Klient", email: "client@example.test", company: "Firma" },
       category: "Inne", priority: "Normalny", status: "Nowe", assigneeId: null, publicRevision: 1,
       createdAt: "2026-09-03", updatedAt: "2026-09-03", closureVersion: 0, suggestionDismissed: false,
-      emails: [{ id: "inbound", direction: "inbound", from: "client@example.test", to: "support@example.com", createdAt: "2026-09-03", body: "Jak działa licencja?" }],
+      emails: [{ id: "inbound", direction: "inbound", from: "client@example.test", to: "support@opentriage.com", createdAt: "2026-09-03", body: "Jak działa licencja?" }],
       comments: [{ id: "internal", body: "INTERNAL_SECRET", userId: state.users[0].id }], activities: [] });
     state.knowledge.push({ id: "doc", mailboxId: "test", category: "Licencja", versions: [{ version: 1, title: "Licencja", body: "Instrukcja testowa", status: "approved", userId: state.users[0].id, createdAt: "2026-09-03" }] });
     const filename = path.join(directory, "data/prototype/state.json");

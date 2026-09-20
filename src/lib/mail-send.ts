@@ -25,7 +25,7 @@ function initialize() {
 async function appendSentCopy(job: OutgoingMail, raw: Buffer) {
   const client = new ImapFlow({
     host: process.env.TRIAGE_IMAP_HOST!, port: Number(process.env.TRIAGE_IMAP_PORT || 993), secure: true,
-    auth: { user: "support@example.com", pass: process.env.TRIAGE_IMAP_PASSWORD! },
+    auth: { user: "support@opentriage.com", pass: process.env.TRIAGE_IMAP_PASSWORD! },
     logger: false, disableAutoIdle: true, connectionTimeout: 15_000,
     greetingTimeout: 15_000, socketTimeout: 30_000,
   });

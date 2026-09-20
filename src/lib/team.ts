@@ -5,7 +5,7 @@ export const team: User[] = [
   {
     id: "michal",
     name: "Michał Kluska",
-    initials: "TD",
+    initials: "MK",
     color: "#6b6157",
     role: "Zespół wsparcia",
     signature: employeeSignatures.michal,
@@ -13,17 +13,17 @@ export const team: User[] = [
   {
     id: "jan",
     name: "Jan Kowalski",
-    initials: "MG",
+    initials: "JK",
     color: "#874c00",
-    role: "CEO | Prezes Zarządu",
+    role: "CEO",
     signature: employeeSignatures.jan,
   },
   {
     id: "anna",
     name: "Anna Nowak",
-    initials: "IB",
+    initials: "AN",
     color: "#c98d68",
-    role: "Kierownik Działu Administracji i Finansów",
+    role: "Finanse i administracja",
     signature: employeeSignatures.anna,
   },
 ];

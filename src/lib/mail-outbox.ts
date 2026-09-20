@@ -39,7 +39,7 @@ export function reserveReply(state: DemoState, request: ReplyRequest): OutgoingM
   const conversation = state.conversations.find((item) => item.id === action.conversationId);
   if (!conversation) throw new MailError("Nie znaleziono rozmowy.", 404);
   const mailbox = state.mailboxes.find((item) => item.id === conversation.mailboxId);
-  if (mailbox?.id !== "test" || mailbox.email !== "support@example.com" || mailbox.mode !== "imap")
+  if (mailbox?.id !== "test" || mailbox.email !== "support@opentriage.com" || mailbox.mode !== "imap")
     throw new MailError("Wysyłanie nie jest podłączone dla tej skrzynki.", 409, "MAILBOX_NOT_CONNECTED");
   if (state.outbox?.some((job) => job.conversationId === conversation.id && ["prepared", "sending", "unknown"].includes(job.status)))
     throw new MailError("W tej rozmowie trwa już wysyłka albo wymaga sprawdzenia jej wyniku.", 409, "SEND_PENDING");
