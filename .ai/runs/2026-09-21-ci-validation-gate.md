@@ -50,7 +50,7 @@ Every pull request automatically runs the repository's six-command validation ga
 ### Phase 2: Verification
 
 - [x] 2.1 Full local validation gate green in the worktree — recorded at finalize
-- [ ] 2.2 Workflow triggers on this PR and the run passes
+- [x] 2.2 Workflow triggers on this PR and the run passes — https://github.com/triage-software/open-triage/actions/runs/35592400061
 - [x] 2.3 Command list in the workflow matches .ai/agentic.config.json exactly
 
 Engine: ot-auto-create-pr (steps: 5, --loop: no)
