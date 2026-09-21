@@ -7,3 +7,8 @@ data/prototype/
 .DS_Store
 artifacts/
 dist/
+
+# Agent pipeline run artifacts (generated per run, not source)
+.ai/qa/artifacts_*/
+.ai/qa/test-env.json
+.ai/qa/test-env.env
