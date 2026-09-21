@@ -44,8 +44,8 @@ Every pull request automatically runs the repository's six-command validation ga
 
 ### Phase 1: Workflow file
 
-- [ ] 1.1 Add .github/workflows/ci.yml: pull_request + push-to-main triggers, concurrency cancel, Node 22, npm ci for root and api, prisma generate
-- [ ] 1.2 Workflow runs the six validation commands in .ai/agentic.config.json order
+- [x] 1.1 Add .github/workflows/ci.yml: pull_request + push-to-main triggers, concurrency cancel, Node 22, npm ci for root and api, prisma generate — 19e4a5a
+- [x] 1.2 Workflow runs the six validation commands in .ai/agentic.config.json order — 19e4a5a
 
 ### Phase 2: Verification
 
