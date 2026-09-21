@@ -40,6 +40,8 @@ Every pull request automatically runs the repository's six-command validation ga
 
 ## Progress
 
+PR: #6 (link: https://github.com/triage-software/open-triage/pull/6)
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Workflow file
