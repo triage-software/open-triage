@@ -1,5 +1,7 @@
 # Open Triage
 
+[Contributing](CONTRIBUTING.md) | [MIT License](LICENSE)
+
 A local, interactive prototype of a shared support inbox. Next.js 16, React 19, TypeScript and Tailwind CSS 4.
 
 **Current state:** `support@opentriage.com` receives real messages over IMAP and sends replies over SMTP. A copy of each reply is placed in the "Sent" folder of the same mailbox. The server checks INBOX on startup and every 30 seconds; the panel refreshes data every 2 seconds. Demo messages have been removed.

@@ -1,6 +1,7 @@
 # Contribution guidelines & community files
 
 Id: SPEC-0003 · Status: in-review · Date: 2026-09-26 · Owner: Kamil Mastalerz
+Tracked by: #12
 
 ## TLDR
 
@@ -30,11 +31,11 @@ Non-goals: no Contributor License Agreement (MIT needs none), no `CODE_OF_CONDUC
 
 | Id | Criterion | Verify | Covers | Tracked by |
 |---|---|---|---|---|
-| AC-01 | Given a fresh clone of the repository, the root contains `LICENSE` with the MIT permission text and a "Open Triage contributors" copyright line, so GitHub detects and displays the MIT license. | manual | — | — |
-| AC-02 | Given the root `CONTRIBUTING.md`, it documents the issue-and-spec-first flow (issue templates, `SPEC-NNNN` allocation from the registry, dated spec file with header id line, mandatory acceptance criteria, registry row in the same PR, `node scripts/check-specs.mjs`), the branch model with PRs targeting `main`, the six-command validation gate, and the review/QA expectations. | manual | — | — |
-| AC-03 | Given the README landing page, the first content under the H1 is a tab bar whose links open `CONTRIBUTING.md` (label "Contributing") and `LICENSE` (label "MIT License"). | manual | — | — |
-| AC-04 | Given `.github/`, submitting a new GitHub issue offers only the bug template (label `bug`) and the feature template (label `feature`, which requires answering whether a spec exists), and a new PR is prefilled with a body requiring the spec path, an acceptance-criteria checklist with evidence, and the validation-gate commands that were run. | manual | — | — |
-| AC-05 | Given this spec's changes, `node scripts/check-specs.mjs` exits 0 with SPEC-0003 present in the registry with a matching header status. | manual | — | — |
+| AC-01 | Given a fresh clone of the repository, the root contains `LICENSE` with the MIT permission text and a "Open Triage contributors" copyright line, so GitHub detects and displays the MIT license. | manual | — | #12 |
+| AC-02 | Given the root `CONTRIBUTING.md`, it documents the issue-and-spec-first flow (issue templates, `SPEC-NNNN` allocation from the registry, dated spec file with header id line, mandatory acceptance criteria, registry row in the same PR, `node scripts/check-specs.mjs`), the branch model with PRs targeting `main`, the six-command validation gate, and the review/QA expectations. | manual | — | #12 |
+| AC-03 | Given the README landing page, the first content under the H1 is a tab bar whose links open `CONTRIBUTING.md` (label "Contributing") and `LICENSE` (label "MIT License"). | manual | — | #12 |
+| AC-04 | Given `.github/`, submitting a new GitHub issue offers only the bug template (label `bug`) and the feature template (label `feature`, which requires answering whether a spec exists), and a new PR is prefilled with a body requiring the spec path, an acceptance-criteria checklist with evidence, and the validation-gate commands that were run. | manual | — | #12 |
+| AC-05 | Given this spec's changes, `node scripts/check-specs.mjs` exits 0 with SPEC-0003 present in the registry with a matching header status. | manual | — | #12 |
 
 ## 📋 Implementation plan
 
