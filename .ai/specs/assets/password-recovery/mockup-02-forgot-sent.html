@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Mockup: /forgot-password (sent confirmation)</title>
+<style>
+  :root {
+    --canvas:#faf9f6; --surface:#ffffff; --sunken:#f1f0ed; --border:#d7d6d4; --border-soft:#ecebe8;
+    --ink:#2d2d2c; --ink-strong:#111111; --muted:#636261; --accent:#6b6157;
+    --accent-bg:#ebe6dd; --accent-bg-soft:#f7f3e9; --symbol-bg:#ead4c4; --symbol-fg:#8c6850; --dot:#c98d68;
+  }
+  * { box-sizing:border-box; margin:0; font-family:system-ui,-apple-system,'Segoe UI','Helvetica Neue',Arial,sans-serif; }
+  .auth-page { min-height:100vh; display:grid; grid-template-columns:1fr 1fr; background:var(--canvas); color:var(--ink); }
+  .auth-brand { display:flex; flex-direction:column; justify-content:center; gap:14px; padding:48px 56px;
+    background:radial-gradient(1200px 500px at -10% 110%, var(--accent-bg) 0%, transparent 60%), var(--sunken);
+    border-right:1px solid var(--border); color:var(--ink-strong); }
+  .auth-mark { display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px;
+    border-radius:8px; background:var(--symbol-bg); color:var(--symbol-fg); font-weight:700; font-size:20px; }
+  .auth-brand strong { font-size:28px; font-weight:700; letter-spacing:-0.02em; }
+  .auth-brand strong span { color:var(--dot); }
+  .auth-brand p { max-width:34ch; color:var(--muted); font-size:14px; line-height:1.5; }
+  .auth-panel { display:flex; flex-direction:column; justify-content:center; gap:16px; padding:48px; max-width:460px; width:100%; margin:0 auto; }
+  .auth-card { background:var(--surface); border:1px solid var(--border-soft); border-radius:10px;
+    box-shadow:0 1px 2px rgba(69,62,55,.06), 0 4px 16px rgba(69,62,55,.07); padding:28px; }
+  .auth-card h1 { font-size:20px; margin:0 0 12px; color:var(--ink-strong); letter-spacing:-0.01em; }
+  .sent { font-size:14px; color:var(--ink); line-height:1.55; margin:0 0 16px; }
+  .sent strong { color:var(--ink-strong); }
+  .hint { font-size:12px; color:var(--muted); margin:0 0 16px; line-height:1.5; }
+  .linkrow { font-size:13px; color:var(--muted); }
+  .linkrow a { color:var(--accent); }
+  .note { position:fixed; bottom:12px; right:16px; font-size:11px; color:var(--muted); opacity:.75; }
+</style>
+</head>
+<body>
+<main class="auth-page">
+  <div class="auth-brand">
+    <span class="auth-mark">T</span>
+    <strong>open<span>·</span>triage</strong>
+    <p>Shared-inbox triage for teams.</p>
+  </div>
+  <div class="auth-panel">
+    <div class="auth-card">
+      <h1>Check your inbox</h1>
+      <p class="sent">If an account exists for <strong>j.kowalska@example.com</strong>, a reset link is on its way.</p>
+      <p class="hint">The link works once and expires after 60 minutes. Didn’t get it? Check spam or request a new link.</p>
+      <p class="linkrow"><a href="#">Back to sign in</a> · <a href="#">Send again</a></p>
+    </div>
+  </div>
+</main>
+<span class="note">Proposed UI — mockup, not implemented</span>
+</body>
+</html>
