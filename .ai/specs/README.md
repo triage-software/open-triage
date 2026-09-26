@@ -144,5 +144,6 @@ The table below is the single source of truth for spec ids and statuses. Append 
 | Id | Title | File | Status | Date | Owner |
 |---|---|---|---|---|---|
 | SPEC-0001 | open-triage MVP architecture | docs/architecture/SPEC-0001-mvp-architecture.md | accepted | 2026-09-12 | solution-architect |
+| SPEC-0002 | Tenant email-gateway configuration | .ai/specs/2026-09-26-configure-tenant-email-gateway.md | in-review | 2026-09-26 | Kamil Mastalerz |
 
 Unnumbered context artifacts (not specs, no rows): `product-brief.md`, `research/decisions/D01–D09.md`, `research/templates/`.
