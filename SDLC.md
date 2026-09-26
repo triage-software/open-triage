@@ -46,7 +46,7 @@ A ticket is ready for implementation when the answers below are on the ticket or
 
 **Spec-level — a covering spec supplies these, and `ot-auto-write-spec` writes them when they are missing:**
 
-- acceptance criteria;
+- acceptance criteria — the mandatory `## Acceptance criteria` block defined in `.ai/specs/README.md`: `AC-NN` ids, one observable behavior each, a verify method (`test` / `e2e` / `manual`), and traceability to the brief entries they cover;
 - business rules;
 - the happy path and the main unhappy paths;
 - impact on data and permissions;
@@ -54,6 +54,8 @@ A ticket is ready for implementation when the answers below are on the ticket or
 - a link to the prototype or mockups when the change is user-facing.
 
 For a bug, ready means reproducible: `ot-verify-in-repo` is that gate, and the list above applies only to its ticket-level items. Enforcement: `ot-prepare-issue` files tickets with these sections; `ot-auto-manage-issues` records `READY_STATUS` per issue and posts a not-ready comment naming what is missing; `ot-auto-fix-issue`'s feature route stops on a ticket that fails the ticket-level tier instead of speccing around the gap, the way `ot-verify-in-repo` stops on a bug that is not real. Spec-level gaps are not a stop — the spec is authored. A maintainer may waive an item by saying so on the ticket.
+
+Spec identifiers, file naming, statuses, the acceptance-criteria format, and the issue/PR reference conventions are defined in `.ai/specs/README.md` (the SDD conventions); its **Spec registry** is the single source of truth for which `SPEC-NNNN` ids exist. `node scripts/check-specs.mjs` checks that file mechanically — run it whenever a spec changed; it is review tooling, not part of the validation gate.
 
 ## Product decisions as a protected contract
 

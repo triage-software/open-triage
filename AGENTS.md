@@ -32,6 +32,7 @@ Docker (`docker-compose.yml`) runs `db` (Postgres 16), `redis`, `api`, `worker`,
 | i18n (`messages/`, `src/i18n/`) | `messages/en.json`, `src/i18n/request.ts`, `scripts/check-i18n.mjs` | Every user-facing string lives in both locales under matching namespaces; `scripts/check-i18n.mjs` is the gate. Locales: `en`, `pl` (ADR-0004). |
 | Docker & deployment (`Dockerfile`, `api/Dockerfile`, `docker-compose.yml`) | `docs/architecture/DOCKER-COMPOSE-TOPOLOGY.md` | The api container runs `prisma migrate deploy` before serving; the worker reuses the api image. Compose profiles (`with-vikingdb`, `verify-mail`) stay out of the default stack. Environment variables are documented in `.env.example`. |
 | Architecture decisions (`docs/architecture/**`) | the relevant `ADR-*.md` | Changing auth, multi-tenancy, knowledge indexing, or i18n approach requires updating the corresponding ADR in the same PR. |
+| Specs, issues & SDD (creating or editing anything under `.ai/specs/` or `docs/architecture/SPEC-*`, filing or renaming issues, writing acceptance criteria) | `.ai/specs/README.md`, `SDLC.md` (Definition of Ready) | Spec-driven development: every feature starts from a spec. Allocate `SPEC-NNNN` from the registry in `.ai/specs/README.md` (max + 1, never reused), add the header id line, write the mandatory `## Acceptance criteria` block (`AC-NN`, one observable behavior each, a `test`/`e2e`/`manual` verify method), append the registry row in the same PR, and title spec-backed issues `Implement: SPEC-NNNN — <title>`. `node scripts/check-specs.mjs` must pass. |
 
 ## Validation
 
@@ -51,6 +52,7 @@ The authoritative list lives in `.ai/agentic.config.json` (`validation.commands`
 ## Process documents
 
 - `SDLC.md` — ticket flow, label state machine, QA gate, claim protocol.
+- `.ai/specs/README.md` — SDD conventions: spec ids and naming, acceptance-criteria format, issue/PR references, the spec registry.
 - `CODE_REVIEW.md` — review rules applied by reviewers and `ot-code-review`.
 - `BACKWARD_COMPATIBILITY.md` — protected contract surfaces and how to change them.
 - `.ai/agentic.config.json` — pipeline configuration (tracker, browser, labels, gate).
