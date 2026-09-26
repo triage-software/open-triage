@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState } from 'react';
 import { useTranslations } from 'next-intl';
 import { signInAction, signUpAction, type AuthState } from '@/app/actions/auth';
@@ -34,6 +35,7 @@ export function AuthCard({ mode }: { mode: 'sign-in' | 'sign-up' }) {
           />
           {mode === 'sign-up' && <small>{t('passwordHint')}</small>}
         </label>
+        {mode === 'sign-in' && <Link href="/forgot-password">{t('forgotPassword')}</Link>}
         <input type="hidden" name="locale" value="en" />
         {state.error && (
           <p className="auth-error" role="alert">

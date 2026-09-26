@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import nodemailer from 'nodemailer';
 import { systemMailHtml } from './mail-composer';
-import type { InviteMailPayload, VerifyMailPayload } from './producer';
+import type { InviteMailPayload, VerifyMailPayload, PasswordResetMailPayload } from './producer';
 
 const LOCALES = ['en', 'pl'] as const;
 type Locale = (typeof LOCALES)[number];
@@ -16,6 +16,11 @@ const STRINGS: Record<Locale, Record<string, string>> = {
     verifyBody1: 'Welcome to Open Triage! Please confirm your e-mail address.',
     verifyBody2: 'If you did not create this account, you can ignore this message.',
     linkLabel2: 'Confirm e-mail',
+    resetTitle: 'Reset your password',
+    resetBody1: 'A password reset was requested for your account in {account} on Open Triage.',
+    resetBody2: 'Open the link below to set a new password. The link expires in 30 minutes and works once.',
+    resetBody3: 'If you did not request this, you can ignore this message. Your password stays unchanged.',
+    resetLinkLabel: 'Set a new password',
   },
   pl: {
     inviteTitle: 'Dołącz do zespołu {tenant} w Open Triage',
@@ -26,6 +31,11 @@ const STRINGS: Record<Locale, Record<string, string>> = {
     verifyBody1: 'Witamy w Open Triage! Potwierdź proszę swój adres e-mail.',
     verifyBody2: 'Jeśli to nie Ty zakładałeś konto, zignoruj tę wiadomość.',
     linkLabel2: 'Potwierdź e-mail',
+    resetTitle: 'Zresetuj hasło',
+    resetBody1: 'Otrzymaliśmy prośbę o reset hasła do Twojego konta w {account} w Open Triage.',
+    resetBody2: 'Otwórz poniższy link, aby ustawić nowe hasło. Link wygasa po 30 minutach i działa jednokrotnie.',
+    resetBody3: 'Jeśli to nie Ty prosisz o reset, zignoruj tę wiadomość. Twoje hasło pozostanie bez zmian.',
+    resetLinkLabel: 'Ustaw nowe hasło',
   },
 };
 
@@ -39,12 +49,12 @@ function t(locale: string, key: string, vars?: Record<string, string>): string {
 }
 
 /**
- * System e-mail delivery (invite / verification) over SMTP.
+ * System e-mail delivery (invite / verification / password reset) over SMTP.
  *
  * Configuration precedence: SMTP_SYSTEM_* env (self-host operators), else the
- * SMTP_* env fallbacks, else no delivery (producer logs the token and callers
- * keep the MVP fallbacks — the invite response keeps setupToken when SMTP is
- * not configured).
+ * SMTP_* env fallbacks, else no delivery. Invite/verification callers keep
+ * their MVP fallbacks when SMTP is not configured. Password reset requires
+ * delivery and never exposes its token through an API response or logs.
  */
 @Injectable()
 export class NotificationService {
@@ -115,11 +125,31 @@ export class NotificationService {
     this.logger.log(`verification mail sent to ${payload.email}`);
   }
 
+  async sendPasswordResetMail(payload: PasswordResetMailPayload, appUrl: string): Promise<void> {
+    const config = this.smtpConfig();
+    if (!config) throw new Error('system SMTP not configured');
+    const url = `${appUrl.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(payload.token)}`;
+    const title = t(payload.locale, 'resetTitle');
+    const body = [
+      t(payload.locale, 'resetBody1', { account: payload.accountName }),
+      t(payload.locale, 'resetBody2'),
+      t(payload.locale, 'resetBody3'),
+    ];
+    await this.send(
+      config,
+      payload.email,
+      title,
+      systemMailHtml(title, body, url, t(payload.locale, 'resetLinkLabel')),
+      [title, ...body, url].join('\n\n'),
+    );
+  }
+
   private async send(
     config: { host: string; port: number; secure: boolean; user: string; pass: string; from: string },
     to: string,
     subject: string,
     html: string,
+    text?: string,
   ): Promise<void> {
     const transport = nodemailer.createTransport({
       host: config.host,
@@ -133,7 +163,7 @@ export class NotificationService {
       debug: false,
     });
     try {
-      await transport.sendMail({ from: config.from, to, subject, html });
+      await transport.sendMail({ from: config.from, to, subject, html, ...(text === undefined ? {} : { text }) });
     } finally {
       transport.close();
     }

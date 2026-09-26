@@ -87,23 +87,33 @@ export class AuthService {
     // Platform admins authenticate the same way (ADR-0002)
     const admin = await this.prisma.platformAdmin.findUnique({ where: { email: data.email } });
     if (admin && (await argon2.verify(admin.passwordHash, data.password))) {
-      await this.createSessionForAdmin(admin.id, res);
+      await this.createSessionForAdmin(admin.id, res, admin.passwordHash);
       return { platformAdmin: true, email: admin.email, locale: admin.locale };
     }
 
-    const user = await this.prisma.user.findFirst({
+    // An email is unique within a tenant, not across tenants: an invited
+    // membership can have a different password from an earlier account.
+    const users = await this.prisma.user.findMany({
       where: { email: data.email },
       include: { tenant: true },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
-    if (!user || user.deactivatedAt || !(await argon2.verify(user.passwordHash, data.password))) {
-      throw new UnauthorizedException({ code: 'INVALID_CREDENTIALS' });
+    let matchesSuspendedTenant = false;
+    for (const user of users) {
+      if (user.deactivatedAt || !(await argon2.verify(user.passwordHash, data.password))) continue;
+      if (user.tenant.suspended) {
+        matchesSuspendedTenant = true;
+        continue;
+      }
+      await this.createSessionForUser(user.id, res, user.passwordHash);
+      return {
+        user: { id: user.id, email: user.email, role: user.role, locale: user.locale },
+        tenant: { id: user.tenant.id, name: user.tenant.name, slug: user.tenant.slug },
+      };
     }
-    if (user.tenant.suspended) throw new UnauthorizedException({ code: 'TENANT_SUSPENDED' });
-    await this.createSessionForUser(user.id, res);
-    return {
-      user: { id: user.id, email: user.email, role: user.role, locale: user.locale },
-      tenant: { id: user.tenant.id, name: user.tenant.name, slug: user.tenant.slug },
-    };
+    throw new UnauthorizedException({
+      code: matchesSuspendedTenant ? 'TENANT_SUSPENDED' : 'INVALID_CREDENTIALS',
+    });
   }
 
   /** POST /auth/logout — deletes the session row (instant revocation, ADR-0002). */
@@ -176,21 +186,42 @@ export class AuthService {
   private async createSessionForUser(
     userId: string,
     res: { cookie: (n: string, v: string, o: object) => void },
+    expectedPasswordHash?: string,
   ) {
     const sessionId = generateSessionId();
-    await this.prisma.session.create({
-      data: { id: sessionId, userId, expiresAt: new Date(Date.now() + SESSION_TTL_MS) },
-    });
+    const data = { id: sessionId, userId, expiresAt: new Date(Date.now() + SESSION_TTL_MS) };
+    if (expectedPasswordHash === undefined) {
+      await this.prisma.session.create({ data });
+    } else {
+      await this.prisma.$transaction(async (tx) => {
+        // Lock the credential row until this session commits. A password reset
+        // either changes the hash first (reject login) or revokes this session.
+        const current = await tx.user.updateMany({
+          where: { id: userId, passwordHash: expectedPasswordHash, deactivatedAt: null, tenant: { suspended: false } },
+          data: { passwordHash: expectedPasswordHash },
+        });
+        if (current.count !== 1) throw new UnauthorizedException({ code: 'INVALID_CREDENTIALS' });
+        await tx.session.create({ data });
+      });
+    }
     this.setCookie(res, sessionId);
   }
 
   private async createSessionForAdmin(
     adminId: string,
     res: { cookie: (n: string, v: string, o: object) => void },
+    expectedPasswordHash: string,
   ) {
     const sessionId = generateSessionId();
-    await this.prisma.session.create({
-      data: { id: sessionId, adminId, expiresAt: new Date(Date.now() + SESSION_TTL_MS) },
+    await this.prisma.$transaction(async (tx) => {
+      const current = await tx.platformAdmin.updateMany({
+        where: { id: adminId, passwordHash: expectedPasswordHash },
+        data: { passwordHash: expectedPasswordHash },
+      });
+      if (current.count !== 1) throw new UnauthorizedException({ code: 'INVALID_CREDENTIALS' });
+      await tx.session.create({
+        data: { id: sessionId, adminId, expiresAt: new Date(Date.now() + SESSION_TTL_MS) },
+      });
     });
     this.setCookie(res, sessionId);
   }
