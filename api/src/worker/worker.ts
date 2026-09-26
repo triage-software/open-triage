@@ -15,6 +15,7 @@ import type {
   SentCopyPayload,
   InviteMailPayload,
   VerifyMailPayload,
+  PasswordResetMailPayload,
   DraftPayload,
 } from './producer';
 
@@ -91,6 +92,10 @@ async function bootstrap() {
         await notifications.sendVerifyMail(job.data as VerifyMailPayload, APP_URL);
         return;
       }
+      if (job.name === JOBS.passwordResetMail) {
+        await notifications.sendPasswordResetMail(job.data as PasswordResetMailPayload, APP_URL);
+        return;
+      }
       logger.warn(`notification: unknown job ${job.name}`);
     },
     { connection: connection as Redis, concurrency: 2 },
@@ -120,7 +125,10 @@ async function bootstrap() {
   const workers = [pollWorker, sendWorker, notificationWorker, aiWorker];
   for (const worker of workers) {
     worker.on('failed', (job, err) => {
-      logger.warn(`${worker.name} job ${job?.id ?? '?'} failed: ${err.message}`);
+      // A transport error may contain message data. Reset-link details must
+      // never enter logs; the hashed job identity still identifies the failure.
+      const reason = job?.name === JOBS.passwordResetMail ? 'password reset delivery failed' : err.message;
+      logger.warn(`${worker.name} job ${job?.id ?? '?'} failed: ${reason}`);
     });
   }
   logger.log(`worker ready (poll every ${POLL_INTERVAL_MS / 1000}s, queues: ${Object.values(QUEUES).join(', ')})`);

@@ -15,7 +15,8 @@
     "migrate:dev": "prisma migrate dev",
     "generate": "prisma generate",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --import tsx --test test/*.test.ts"
+    "test": "node --import tsx --test test/*.test.ts",
+    "test:integration": "node test/run-integration.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

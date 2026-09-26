@@ -115,6 +115,14 @@ Public messages and comments have separate types and operations. The archive mar
 
 The test mailbox's IMAP and SMTP, and OpenRouter once a key is saved in settings, are connected. Supabase and GitHub are not connected. Until automatic classification finishes, new cases have the category "Other" and normal priority. Classification only works with the server running and OpenRouter configured; the file-based queue is designed for a single process, not multiple replicas. A draft is not generated automatically. The knowledge-entry proposal on closing a conversation is created locally from the public reply and requires approval. Folders other than INBOX are not imported, but replies from the panel are saved to "Sent". Received attachments are available in `.eml`; the editor sends text-only replies.
 
+## Password recovery in the authenticated application
+
+The `/sign-in` page includes “Forgot password?”. Recovery requires the Nest API,
+PostgreSQL, Redis and system SMTP delivery; a link sets a new password and
+revokes that account's sessions. See the [local Mailpit setup, integration-test
+command and browser checklist](docs/qa/password-reset.md). This flow is separate
+from the file-backed prototype described above.
+
 ## Verification
 
 Tests (Node.js 22.18+): `npm test`. They cover import, deduplication, threads, mailbox isolation, drafts, comments and MIME, as well as the shared sender, SMTP confirmation, separate copy retries, dropped connections, conflicts, and identical copy content in "Sent". Sending tests use substituted transports; they do not send emails to clients. SMTP login and the `SENT` folder were verified on the test account without sending messages.
