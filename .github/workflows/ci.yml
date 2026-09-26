@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validation-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            api/package-lock.json
+
+      - name: Install dependencies (web)
+        run: npm ci
+
+      - name: Install dependencies (api)
+        run: npm ci --prefix api
+
+      - name: Generate Prisma client (api)
+        run: npm --prefix api run generate
+
+      # Mirrors validation.commands in .ai/agentic.config.json.
+      # Drift rule (SDLC.md): when the command list changes, update the
+      # config, SDLC.md, and this workflow together.
+      - name: Typecheck (web)
+        run: npm run typecheck
+
+      - name: Test (web)
+        run: npm test
+
+      - name: Build (web)
+        run: npm run build
+
+      - name: Typecheck (api)
+        run: npm --prefix api run typecheck
+
+      - name: Test (api)
+        run: npm --prefix api test
+
+      - name: Build (api)
+        run: npm --prefix api run build
