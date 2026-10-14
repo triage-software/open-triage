@@ -12,6 +12,8 @@ Conventions:
 - `POST /auth/signup` {tenantName, email, password, locale} → creates tenant + owner user; verification e-mail queued for SMTP delivery (worker); falls back to server-side token log when system SMTP is not configured
 - `POST /auth/login` {email, password} → sets session cookie
 - `POST /auth/logout`
+- `POST /auth/forgot-password` {email} → `200 {ok:true}` for both known and unknown addresses. Eligible accounts receive a separate reset link per workspace (and platform-admin account); repeat requests within 60 seconds send nothing. Missing Redis/SMTP configuration → `503 RESET_UNAVAILABLE`. This endpoint returns no token and its success does not confirm mail delivery.
+- `POST /auth/reset-password` {token, password} → `200 {ok:true}` after changing that account's password and revoking its sessions. Password length: 10–200 characters. Links expire 30 minutes after issuance and can be consumed once; malformed, expired, replaced or used links → `400 INVALID_RESET_TOKEN`. Other invalid inputs → `400 VALIDATION_ERROR`. Neither reset endpoint requires a session or uses the `{data}` envelope; successful reset requires a new sign-in. See [password recovery](ADR-0002-auth.md#password-recovery) and the [local QA runbook](../qa/password-reset.md).
 - `GET /auth/me` → user, tenant, role, locale
 - `POST /auth/accept-invite` {token, password, name?} → invited teammate sets password (one-time setup token from invite), account activated + verified, session set (QA-3). When SMTP is configured the invite e-mail carries the setup link and the invite response no longer includes `setupToken`; without SMTP the MVP fallback keeps returning it to the inviting admin.
 
@@ -41,7 +43,7 @@ Conventions:
 - `GET/POST /users` (invite; POST queues the invite e-mail when SMTP is configured — see Auth note on `setupToken`) · `PATCH /users/:id` (role, locale) · `DELETE /users/:id`
 
 ## Services (Nest modules)
-`AuthModule`, `UsersModule`, `MailboxesModule`, `ConversationsModule`, `KnowledgeModule`, `KnowledgeIndexService` (ADR-0003), `PlatformAdminModule`, `ProducerModule` (BullMQ job producers; degrades without Redis), `WorkerModule` + worker services (`MailSyncService` IMAP poll, `MailSendService` SMTP send + Sent copy, `NotificationService` invite/verify mail, `AiTriageService` classify/draft; entrypoint `dist/worker/worker.js`).
+`AuthModule`, `UsersModule`, `MailboxesModule`, `ConversationsModule`, `KnowledgeModule`, `KnowledgeIndexService` (ADR-0003), `PlatformAdminModule`, `ProducerModule` (BullMQ job producers; degrades without Redis), `WorkerModule` + worker services (`MailSyncService` IMAP poll, `MailSendService` SMTP send + Sent copy, `NotificationService` invite/verify/password-reset mail, `AiTriageService` classify/draft; entrypoint `dist/worker/worker.js`).
 
 ## Multi-tenancy enforcement
 `TenantContextMiddleware` resolves tenant from session; `TenantPrismaService` middleware injects `tenant_id` filters (ADR-0001); `TenantRoleGuard` / `PlatformAdminGuard` on controllers. Tenant models have no public unscoped repository.
