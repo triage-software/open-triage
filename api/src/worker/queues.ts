@@ -19,6 +19,7 @@ export const JOBS = {
   // ot-notification
   inviteMail: 'invite-mail',
   verifyMail: 'verify-mail',
+  passwordResetMail: 'password-reset-mail',
   // ot-ai
   classify: 'classify',
   draft: 'draft',

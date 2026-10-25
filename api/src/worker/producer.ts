@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { createHash } from 'node:crypto';
 import type { Queue } from 'bullmq';
 import { QUEUES, JOBS, createConnection, createQueue } from './queues';
 import type { Redis } from 'ioredis';
@@ -7,7 +8,8 @@ import type { Redis } from 'ioredis';
  * Central place where API + worker enqueue mail/AI jobs. Every producer call
  * degrades gracefully to `false` when Redis is unavailable — callers fall back
  * to the documented MVP behavior (invite setupToken in the response, verify
- * token in server logs, synchronous AI draft).
+ * token in server logs, synchronous AI draft). Password reset has no token
+ * fallback and requires configured SMTP delivery.
  */
 @Injectable()
 export class Producer {
@@ -27,6 +29,13 @@ export class Producer {
 
   get available(): boolean {
     return this.connection !== null;
+  }
+
+  /** Reset tokens have no response/log fallback: queued SMTP delivery is required. */
+  get passwordResetDeliveryEnabled(): boolean {
+    const host = process.env.SMTP_SYSTEM_HOST ?? process.env.SMTP_HOST;
+    const from = process.env.SMTP_SYSTEM_FROM ?? process.env.SMTP_FROM;
+    return this.notification !== null && Boolean(host && from);
   }
 
   /** Shared connection for Worker instances (null → run consumers disabled). */
@@ -115,6 +124,32 @@ export class Producer {
     }
   }
 
+  async enqueuePasswordResetMail(payload: PasswordResetMailPayload): Promise<boolean> {
+    if (!this.passwordResetDeliveryEnabled || !this.notification) return false;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      // Shared worker connections retry indefinitely. Bound this public request
+      // so a Redis outage cannot leave the reset form pending forever. A late
+      // enqueue may still occur; callers invalidate the token on a false result.
+      return await Promise.race([
+        this.notification.add(JOBS.passwordResetMail, payload, {
+          jobId: `password-reset-${createHash('sha256').update(payload.token).digest('hex')}`,
+          removeOnComplete: true,
+          removeOnFail: true,
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 1000 },
+        }).then(() => true),
+        new Promise<boolean>((resolve) => {
+          timeout = setTimeout(() => resolve(false), 5000);
+        }),
+      ]);
+    } catch {
+      return false;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
   async enqueueClassify(tenantId: string, conversationId: string): Promise<boolean> {
     if (!this.ai) return false;
     try {
@@ -187,6 +222,13 @@ export interface VerifyMailPayload {
   email: string;
   token: string;
   locale: string;
+}
+
+export interface PasswordResetMailPayload {
+  email: string;
+  token: string;
+  locale: string;
+  accountName: string;
 }
 
 export interface DraftPayload {
